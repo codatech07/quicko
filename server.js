@@ -1,12 +1,8 @@
 const dotenv = require("dotenv");
 const app = require("./app");
 const connectDB = require("./config/db");
-const dns = require("dns");
 
 dotenv.config();
-
-// dns servers
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 // The server should run correctly after connecting to the database.
 const startServer = async () => {
