@@ -91,7 +91,6 @@ exports.changePassword = asyncHandler(async (req, res) => {
   });
 });
 
-
 //  GET USER BY ID (Admin only)
 exports.getUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
@@ -107,7 +106,6 @@ exports.getUserById = asyncHandler(async (req, res) => {
     user,
   });
 });
-
 
 //  DELETE USER (Admin only)
 exports.deleteUser = asyncHandler(async (req, res) => {
