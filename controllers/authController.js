@@ -20,7 +20,9 @@ exports.register = asyncHandler(async (req, res) => {
   phone = phone.trim();
 
   if (password.includes(" ")) {
-    throw new Error("The password cannot contain spaces");
+    const err = new Error("The password cannot contain spaces");
+    err.statusCode = 400;
+    throw err;
   }
 
   //  Check the fields
@@ -32,44 +34,66 @@ exports.register = asyncHandler(async (req, res) => {
 
   //  username
   if (username.length < 3) {
-    throw new Error("The username must be at least 3 characters long");
+    const err = new Error("The username must be at least 3 characters long");
+    err.statusCode = 400;
+    throw err;
   }
 
   // email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new Error("The email address is invalid");
+    const err = new Error("The email address is invalid");
+    err.statusCode = 400;
+    throw err;
   }
 
   // phone
   const phoneRegex = /^[0-9]{8,15}$/;
   if (!phoneRegex.test(phone)) {
-    throw new Error("Invalid phone number");
+    const err = new Error("Invalid phone number");
+    err.statusCode = 400;
+    throw err;
   }
 
   // password (Medium strength)
   const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=\S+$).{6,}$/;
   if (!passwordRegex.test(password)) {
-    throw new Error(
+    const err = new Error(
       "The password must contain letters and numbers and no spaces",
     );
+    err.statusCode = 400;
+    throw err;
   }
 
   // Password match
   if (password !== confirmPassword) {
-    throw new Error("The passwords do not match");
+    const err = new Error("The passwords do not match");
+    err.statusCode = 400;
+    throw err;
   }
 
   // username match
   const usernameExists = await User.findOne({ username });
   if (usernameExists) {
-    throw new Error("Username already in use");
+    const err = new Error("Username already in use");
+    err.statusCode = 400;
+    throw err;
   }
 
   // email match
   const emailExists = await User.findOne({ email });
   if (emailExists) {
-    throw new Error("The email address is already in use");
+    const err = new Error("The email address is already in use");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // phone match
+  const phoneExists = await User.findOne({ phone });
+  if (phoneExists) {
+    const err = new Error("Phone number already in use");
+    err.statusCode = 400;
+    throw err;
   }
 
   // password encryption
@@ -115,7 +139,7 @@ exports.login = asyncHandler(async (req, res) => {
 
   if (!user) {
     const err = new Error("User not found");
-    err.statusCode = 400;
+    err.statusCode = 404;
     throw err;
   }
 

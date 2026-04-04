@@ -33,7 +33,10 @@ exports.protect = asyncHandler(async (req, res, next) => {
       });
     }
 
-    req.user = user;
+    req.user = {
+  id: user._id,
+  role: user.role,
+};
     next();
   } catch (err) {
     return res.status(401).json({

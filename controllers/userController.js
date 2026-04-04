@@ -7,9 +7,10 @@ exports.getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
 
   res.status(200).json({
-    message: "Data retrieved successfully",
-    user,
-  });
+  status: "success",
+  message: "Data retrieved successfully",
+  user,
+});
 });
 
 //  UPDATE PROFILE (name + username + phone)
@@ -24,25 +25,50 @@ exports.updateMe = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  if (username && username !== user.username) {
-    const exists = await User.findOne({ username });
+  if (username) {
+  const normalizedUsername = username.trim().toLowerCase();
+
+  if (normalizedUsername !== user.username) {
+    const exists = await User.findOne({ username: normalizedUsername });
+
     if (exists) {
       const err = new Error("Username already in use");
       err.statusCode = 400;
       throw err;
     }
-    user.username = username;
+
+    user.username = normalizedUsername;
   }
+}
 
   if (name) user.name = name;
-  if (phone) user.phone = phone;
+  if (phone && phone !== user.phone) {
+  const phoneRegex = /^[0-9]{8,15}$/;
+
+  if (!phoneRegex.test(phone)) {
+    const err = new Error("Invalid phone number");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const exists = await User.findOne({ phone });
+
+  if (exists) {
+    const err = new Error("Phone number already in use");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  user.phone = phone;
+}
 
   await user.save();
 
   res.status(200).json({
-    message: "Data updated successfully",
-    user,
-  });
+  status: "success",
+  message: "Data updated successfully",
+  user,
+});
 });
 
 // CHANGE PASSWORD
@@ -87,8 +113,9 @@ exports.changePassword = asyncHandler(async (req, res) => {
   await user.save();
 
   res.status(200).json({
-    message: "Password changed successfully",
-  });
+  status: "success",
+  message: "Password changed successfully",
+});
 });
 
 //  GET USER BY ID (Admin only)
@@ -102,9 +129,10 @@ exports.getUserById = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({
-    message: "User retrieved successfully",
-    user,
-  });
+  status: "success",
+  message: "User retrieved successfully",
+  user,
+});
 });
 
 //  DELETE USER (Admin only)
@@ -120,6 +148,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   await user.deleteOne();
 
   res.status(200).json({
-    message: "User deleted successfully",
-  });
+  status: "success",
+  message: "User deleted successfully",
+});
 });

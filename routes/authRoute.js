@@ -8,10 +8,15 @@ router.post("/register", register);
 router.post("/login", login);
 
 // Route protected
-router.get("/me", protect, (req, res) => {
-  res.json({
+const User = require("../models/userModel");
+
+router.get("/me", protect, async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password");
+
+  res.status(200).json({
+    status: "success",
     message: "Accessed successfully",
-    user: req.user,
+    user,
   });
 });
 

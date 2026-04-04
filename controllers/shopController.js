@@ -1,7 +1,6 @@
 const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
 
-
 //  create shop
 exports.createShop = asyncHandler(async (req, res) => {
   const { name, description, image, phone, address } = req.body;
@@ -27,7 +26,6 @@ exports.createShop = asyncHandler(async (req, res) => {
   });
 });
 
-
 //  Bring all the shops
 exports.getShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find().populate("owner", "name username");
@@ -38,12 +36,11 @@ exports.getShops = asyncHandler(async (req, res) => {
   });
 });
 
-
 // One shop brought
 exports.getShopById = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id).populate(
     "owner",
-    "name username"
+    "name username",
   );
 
   if (!shop) {
@@ -58,8 +55,8 @@ exports.getShopById = asyncHandler(async (req, res) => {
   });
 });
 
+//  update shop information
 
-//  Edit shop information
 exports.updateShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
 
@@ -69,7 +66,13 @@ exports.updateShop = asyncHandler(async (req, res) => {
     throw err;
   }
 
-  // Update only the submitted fields
+  // 🔒 فقط admin
+  if (req.user.role !== "admin") {
+    const err = new Error("Not authorized, admin only");
+    err.statusCode = 403;
+    throw err;
+  }
+
   shop.name = req.body.name || shop.name;
   shop.description = req.body.description || shop.description;
   shop.image = req.body.image || shop.image;
@@ -84,7 +87,6 @@ exports.updateShop = asyncHandler(async (req, res) => {
   });
 });
 
-
 // Delete shop
 exports.deleteShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
@@ -92,6 +94,13 @@ exports.deleteShop = asyncHandler(async (req, res) => {
   if (!shop) {
     const err = new Error("The shop is not there");
     err.statusCode = 404;
+    throw err;
+  }
+
+  // 🔒 فقط admin
+  if (req.user.role !== "admin") {
+    const err = new Error("Not authorized, admin only");
+    err.statusCode = 403;
     throw err;
   }
 

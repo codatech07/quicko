@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      minlength: 5,
+      minlength: 3,
     },
 
     email: {
@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: true,
+      unique: true,
     },
 
     password: {
