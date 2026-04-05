@@ -53,6 +53,13 @@ otpLastAttempt: Date,
       enum: ["user", "admin"],
       default: "user",
     },
+    isVerified: {
+  type: Boolean,
+  default: false,
+},
+
+emailVerificationOTP: String,
+emailVerificationExpire: Date,
   },
   { timestamps: true }
 );
@@ -67,6 +74,19 @@ userSchema.methods.createPasswordResetOTP = function () {
     .digest("hex");
 
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+  return otp;
+};
+
+userSchema.methods.createEmailVerificationOTP = function () {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  this.emailVerificationOTP = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
+  this.emailVerificationExpire = Date.now() + 10 * 60 * 1000;
 
   return otp;
 };

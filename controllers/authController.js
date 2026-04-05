@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const TokenBlacklist = require("../models/tokenBlacklistModel");
 
 // Create a token
 const createToken = (id) => {
@@ -101,7 +102,7 @@ exports.register = asyncHandler(async (req, res) => {
   // password encryption
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  const user = await User.create({
+  const user = new User({
     name,
     username,
     email,
@@ -109,10 +110,19 @@ exports.register = asyncHandler(async (req, res) => {
     password: hashedPassword,
   });
 
-  const token = createToken(user._id);
+  const otp = user.createEmailVerificationOTP();
+
+  await user.save();
+
+  await sendEmail({
+    email: user.email,
+    subject: "Verify your email",
+    message: `Your verification code is: ${otp}`,
+  });
+
   res.status(201).json({
-    message: "User created",
-    token,
+    status: "success",
+    message: "User registered. Please verify your email",
   });
 });
 
@@ -144,8 +154,7 @@ exports.login = asyncHandler(async (req, res) => {
     err.statusCode = 404;
     throw err;
   }
-
-  // Password verification
+    // Password verification
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
@@ -154,11 +163,42 @@ exports.login = asyncHandler(async (req, res) => {
     throw err;
   }
 
+  // is email validate
+  if (!user.isVerified) {
+    // 🔐 إنشاء OTP جديد
+    const otp = user.createEmailVerificationOTP();
+
+    await user.save({ validateBeforeSave: false });
+
+    // 📧 إرسال الإيميل
+    await sendEmail({
+      email: user.email,
+      subject: "Verify your email",
+      message: `Your verification code is: ${otp}`,
+    });
+
+    return res.status(403).json({
+      email: user.email,
+      status: "error",
+      message: "Account not verified. A new OTP has been sent to your email",
+    });
+  }
+
+
   const token = createToken(user._id);
 
   res.status(200).json({
     message: "Login successful",
     token,
+    user: {
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isVerified: user.isVerified,
+    },
   });
 });
 
@@ -308,5 +348,76 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Password reset successful",
+  });
+});
+
+// verify Email
+exports.verifyEmail = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  // 1️⃣ تحقق من البيانات
+  if (!email || !otp) {
+    const err = new Error("Email and OTP required");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // 2️⃣ تشفير OTP للمقارنة
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+
+  // 3️⃣ البحث عن المستخدم
+  const user = await User.findOne({
+    email: email.toLowerCase(),
+    emailVerificationOTP: hashedOTP,
+    emailVerificationExpire: { $gt: Date.now() },
+  });
+
+  // 4️⃣ إذا الكود غلط أو منتهي
+  if (!user) {
+    const err = new Error("Invalid or expired OTP");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // 5️⃣ تفعيل الحساب
+  user.isVerified = true;
+  user.emailVerificationOTP = undefined;
+  user.emailVerificationExpire = undefined;
+  const token = createToken(user._id);
+
+  await user.save();
+
+  // 6️⃣ الرد
+  res.status(200).json({
+    status: "success",
+    message: "Email verified successfully",
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isVerified: user.isVerified,
+    },
+  });
+});
+
+
+ // log out
+exports.logout = asyncHandler(async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+
+  const decoded = jwt.decode(token);
+
+  await TokenBlacklist.create({
+    token,
+    expiresAt: new Date(decoded.exp * 1000),
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Logged out successfully",
   });
 });

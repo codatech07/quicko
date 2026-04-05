@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
+const TokenBlacklist = require("../models/tokenBlacklistModel");
 
 const User = require("../models/userModel");
 
@@ -7,12 +8,21 @@ exports.protect = asyncHandler(async (req, res, next) => {
   let token;
 
   if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer ")
-  ) {
-    // Check the format
-    token = req.headers.authorization.split(" ")[1];
+  req.headers.authorization &&
+  req.headers.authorization.startsWith("Bearer ")
+) {
+  token = req.headers.authorization.split(" ")[1];
+
+  // 🔥 هون بالضبط
+  const isBlacklisted = await TokenBlacklist.findOne({ token });
+
+  if (isBlacklisted) {
+    return res.status(401).json({
+      status: "error",
+      message: "Token expired, please login again",
+    });
   }
+}
 
   if (!token) {
     return res.status(401).json({
