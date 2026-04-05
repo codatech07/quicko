@@ -135,6 +135,18 @@ exports.getUserById = asyncHandler(async (req, res) => {
 });
 });
 
+//  GET ALL USERS (Admin only)
+exports.getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find().select("-password");
+
+  res.status(200).json({
+    status: "success",
+    message: "Users retrieved successfully",
+    count: users.length,
+    users,
+  });
+});
+
 //  DELETE USER (Admin only)
 exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);

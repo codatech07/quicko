@@ -6,6 +6,7 @@ const {
   updateMe,
   changePassword,
   getUserById,
+  getAllUsers,
   deleteUser,
 } = require("../controllers/userController");
 
@@ -22,6 +23,7 @@ router.put("/me", protect, updateMe);
 router.put("/change-password", protect, changePassword);
 
 // 🛠️ Admin فقط
+router.get("/", protect, isAdmin, getAllUsers);
 router.get("/:id", protect, isAdmin, getUserById);
 router.delete("/:id", protect, isAdmin, deleteUser);
 
