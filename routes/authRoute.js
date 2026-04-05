@@ -1,11 +1,20 @@
 const express = require("express");
-const { register, login } = require("../controllers/authController.js");
+const {
+  register,
+  login,
+  forgotPassword,
+  resetPassword,
+  verifyOTP,
+} = require("../controllers/authController");
 const { protect } = require("../middlewares/authMiddleware.js");
 
 const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/verify-otp", verifyOTP);
+router.post("/reset-password", resetPassword);
 
 // Route protected
 const User = require("../models/userModel");

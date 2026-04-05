@@ -2,6 +2,8 @@ const User = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 // Create a token
 const createToken = (id) => {
@@ -157,5 +159,154 @@ exports.login = asyncHandler(async (req, res) => {
   res.status(200).json({
     message: "Login successful",
     token,
+  });
+});
+
+// FORGOT PASSWORD
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    const err = new Error("Email is required");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    const err = new Error("User not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const now = Date.now();
+
+  // reset evry day
+  if (user.otpLastAttempt && now - user.otpLastAttempt > 24 * 60 * 60 * 1000) {
+    user.otpAttempts = 0;
+  }
+
+  // If the limit is reached
+  if (user.otpAttempts >= 5) {
+    const err = new Error("You reached max OTP requests today");
+    err.statusCode = 429;
+    throw err;
+  }
+
+  //  Attempts 4 and 5 require waiting.
+  if (user.otpAttempts >= 3) {
+    if (user.otpLastAttempt && now - user.otpLastAttempt < 30 * 60 * 1000) {
+      const err = new Error("Wait 30 minutes before requesting again");
+      err.statusCode = 429;
+      throw err;
+    }
+  }
+
+  //  create OTP
+  const otp = user.createPasswordResetOTP();
+
+  // Update attempts for OTP
+  user.otpAttempts += 1;
+  user.otpLastAttempt = now;
+
+  await user.save({ validateBeforeSave: false });
+
+  const message = `Your password reset code is: ${otp}
+This code will expire in 10 minutes.`;
+
+  await sendEmail({
+    email: user.email,
+    subject: "Password Reset Code",
+    message,
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "OTP sent to email",
+  });
+});
+
+// verify otp
+exports.verifyOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    const err = new Error("Email and OTP are required");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+
+  const user = await User.findOne({
+    email,
+    resetPasswordOTP: hashedOTP,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    const err = new Error("Invalid or expired OTP");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "OTP verified successfully",
+  });
+});
+
+// reset password
+exports.resetPassword = asyncHandler(async (req, res) => {
+  const { email, otp, password, confirmPassword } = req.body;
+
+  if (!email || !otp || !password || !confirmPassword) {
+    const err = new Error("All fields are required");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (password.includes(" ")) {
+    const err = new Error("Password cannot contain spaces");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (password.length < 6) {
+    const err = new Error("Password too short");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (password !== confirmPassword) {
+    const err = new Error("Passwords do not match");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+
+  const user = await User.findOne({
+    email,
+    resetPasswordOTP: hashedOTP,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    const err = new Error("OTP invalid or expired");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  user.password = await bcrypt.hash(password, 12);
+  user.resetPasswordOTP = undefined;
+  user.resetPasswordExpire = undefined;
+
+  await user.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Password reset successful",
   });
 });
