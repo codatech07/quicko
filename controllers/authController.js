@@ -4,7 +4,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
-const TokenBlacklist = require("../models/tokenBlacklistModel");
 
 // Create a token
 const createToken = (id) => {
@@ -154,14 +153,6 @@ exports.login = asyncHandler(async (req, res) => {
     err.statusCode = 404;
     throw err;
   }
-    // Password verification
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (!isMatch) {
-    const err = new Error("Incorrect password");
-    err.statusCode = 400;
-    throw err;
-  }
 
   // is email validate
   if (!user.isVerified) {
@@ -184,6 +175,14 @@ exports.login = asyncHandler(async (req, res) => {
     });
   }
 
+  // Password verification
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    const err = new Error("Incorrect password");
+    err.statusCode = 400;
+    throw err;
+  }
 
   const token = createToken(user._id);
 
@@ -404,18 +403,8 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   });
 });
 
-
- // log out
+// log out
 exports.logout = asyncHandler(async (req, res) => {
-  const token = req.headers.authorization.split(" ")[1];
-
-  const decoded = jwt.decode(token);
-
-  await TokenBlacklist.create({
-    token,
-    expiresAt: new Date(decoded.exp * 1000),
-  });
-
   res.status(200).json({
     status: "success",
     message: "Logged out successfully",
