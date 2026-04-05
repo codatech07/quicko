@@ -10,8 +10,9 @@ exports.isAdmin = asyncHandler(async (req, res, next) => {
 
   if (req.user.role !== "admin") {
     return res.status(403).json({
-      message: "Not allowed, admin privileges required",
-    });
+  status: "error",
+  message: "Not allowed, admin privileges required",
+});
   }
 
   next();
