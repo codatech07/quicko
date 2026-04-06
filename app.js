@@ -2,6 +2,9 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 // routes
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 app.use("/api/auth", require("./routes/authRoute"));
 //user
 app.use("/api/users", require("./routes/userRoute"));
