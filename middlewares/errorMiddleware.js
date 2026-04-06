@@ -4,7 +4,7 @@ const errorHandler = (err, req, res, next) => {
   // 🔥 Mongo duplicate
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
-    message = "${field} already in use";
+    message = `${field} already in use`;
     statusCode = 400;
   }
   // 🔥 Mongoose validation error

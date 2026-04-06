@@ -97,7 +97,7 @@ exports.register = asyncHandler(async (req, res) => {
   await sendEmail({
     email: user.email,
     subject: "Verify your email",
-    message: "Your verification code is: ${otp}",
+    message: `Your verification code is: ${otp}`,
   });
   res.status(201).json({
     status: "success",
@@ -136,7 +136,7 @@ exports.login = asyncHandler(async (req, res) => {
     await sendEmail({
       email: user.email,
       subject: "Verify your email",
-      message: "Your verification code is: ${otp}",
+      message: `Your verification code is: ${otp}`,
     });
     return res.status(403).json({
       email: user.email,
@@ -166,6 +166,7 @@ exports.login = asyncHandler(async (req, res) => {
     },
   });
 });
+
 // FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -205,8 +206,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   user.otpAttempts += 1;
   user.otpLastAttempt = now;
   await user.save({ validateBeforeSave: false });
-  const message =
-    "Your password reset code is: ${otp} This code will expire in 10 minutes.";
+  const message = `Your password reset code is: ${otp} This code will expire in 10 minutes.`;
   await sendEmail({
     email: user.email,
     subject: "Password Reset Code",
@@ -234,10 +234,16 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
     err.statusCode = 400;
     throw err;
   }
-  res
-    .status(200)
-    .json({ status: "success", message: "OTP verified successfully" });
+  user.resetPasswordOTP = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "OTP verified successfully",
+  });
 });
+
 // reset password
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
@@ -325,6 +331,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     },
   });
 });
+
 // log out
 exports.logout = asyncHandler(async (req, res) => {
   res
