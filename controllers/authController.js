@@ -96,13 +96,16 @@ exports.register = asyncHandler(async (req, res) => {
   });
   const otp = user.createEmailVerificationOTP();
   await user.save();
-  sendEmail({
-  email: user.email,
-  subject: "Verify your email",
-  message: `Your verification code is: ${otp}`,
-})
-  .then(() => console.log("Email sent"))
-  .catch((err) => console.log("Email error:", err));
+  try {
+  await sendEmail({
+    email: user.email,
+    subject: "Verify your email",
+    message: `Your verification code is: ${otp}`,
+  });
+  console.log("Email sent");
+} catch (err) {
+  console.log("Email error:", err);
+}
   res.status(201).json({
     status: "success",
     message: "User registered. Please verify your email",
