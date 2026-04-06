@@ -1,14 +1,8 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-
 const userSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
+    name: { type: String, required: true, trim: true },
     username: {
       type: String,
       required: true,
@@ -17,78 +11,34 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       minlength: 3,
     },
-
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
-
-    phone: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
-    password: {
-      type: String,
-      required: true,
-      minlength: 6,
-      select: false,
-    },
-
+    email: { type: String, required: true, unique: true, lowercase: true },
+    phone: { type: String, required: true, unique: true },
+    password: { type: String, required: true, minlength: 6, select: false },
     resetPasswordOTP: String,
-resetPasswordExpire: Date,
-
-otpAttempts: {
-  type: Number,
-  default: 0,
-},
-
-otpLastAttempt: Date,
-
-    role: {
-      type: String,
-      enum: ["user", "admin"],
-      default: "user",
-    },
-    isVerified: {
-  type: Boolean,
-  default: false,
-},
-
-emailVerificationOTP: String,
-emailVerificationExpire: Date,
+    resetPasswordExpire: Date,
+    otpAttempts: { type: Number, default: 0 },
+    otpLastAttempt: Date,
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+    isVerified: { type: Boolean, default: false },
+    emailVerificationOTP: String,
+    emailVerificationExpire: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-
 // password update
 userSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  this.resetPasswordOTP = crypto
-    .createHash("sha256")
-    .update(otp)
-    .digest("hex");
-
+  this.resetPasswordOTP = crypto.createHash("sha256").update(otp).digest("hex");
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
-
   return otp;
 };
-
 userSchema.methods.createEmailVerificationOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
   this.emailVerificationOTP = crypto
     .createHash("sha256")
     .update(otp)
     .digest("hex");
-
   this.emailVerificationExpire = Date.now() + 10 * 60 * 1000;
-
   return otp;
 };
-
 module.exports = mongoose.model("User", userSchema);
