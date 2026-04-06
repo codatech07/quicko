@@ -7,10 +7,10 @@ exports.getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
 
   res.status(200).json({
-  status: "success",
-  message: "Data retrieved successfully",
-  user,
-});
+    status: "success",
+    message: "Data retrieved successfully",
+    user,
+  });
 });
 
 //  UPDATE PROFILE (name + username + phone)
@@ -26,49 +26,49 @@ exports.updateMe = asyncHandler(async (req, res) => {
   }
 
   if (username) {
-  const normalizedUsername = username.trim().toLowerCase();
+    const normalizedUsername = username.trim().toLowerCase();
 
-  if (normalizedUsername !== user.username) {
-    const exists = await User.findOne({ username: normalizedUsername });
+    if (normalizedUsername !== user.username) {
+      const exists = await User.findOne({ username: normalizedUsername });
 
-    if (exists) {
-      const err = new Error("Username already in use");
+      if (exists) {
+        const err = new Error("Username already in use");
+        err.statusCode = 400;
+        throw err;
+      }
+
+      user.username = normalizedUsername;
+    }
+  }
+
+  if (name) user.name = name;
+  if (phone && phone !== user.phone) {
+    const phoneRegex = /^[0-9]{8,15}$/;
+
+    if (!phoneRegex.test(phone)) {
+      const err = new Error("Invalid phone number");
       err.statusCode = 400;
       throw err;
     }
 
-    user.username = normalizedUsername;
+    const exists = await User.findOne({ phone });
+
+    if (exists) {
+      const err = new Error("Phone number already in use");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    user.phone = phone;
   }
-}
-
-  if (name) user.name = name;
-  if (phone && phone !== user.phone) {
-  const phoneRegex = /^[0-9]{8,15}$/;
-
-  if (!phoneRegex.test(phone)) {
-    const err = new Error("Invalid phone number");
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const exists = await User.findOne({ phone });
-
-  if (exists) {
-    const err = new Error("Phone number already in use");
-    err.statusCode = 400;
-    throw err;
-  }
-
-  user.phone = phone;
-}
 
   await user.save();
 
   res.status(200).json({
-  status: "success",
-  message: "Data updated successfully",
-  user,
-});
+    status: "success",
+    message: "Data updated successfully",
+    user,
+  });
 });
 
 // CHANGE PASSWORD
@@ -113,9 +113,9 @@ exports.changePassword = asyncHandler(async (req, res) => {
   await user.save();
 
   res.status(200).json({
-  status: "success",
-  message: "Password changed successfully",
-});
+    status: "success",
+    message: "Password changed successfully",
+  });
 });
 
 //  GET USER BY ID (Admin only)
@@ -129,10 +129,10 @@ exports.getUserById = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({
-  status: "success",
-  message: "User retrieved successfully",
-  user,
-});
+    status: "success",
+    message: "User retrieved successfully",
+    user,
+  });
 });
 
 //  GET ALL USERS (Admin only)
@@ -160,7 +160,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   await user.deleteOne();
 
   res.status(200).json({
-  status: "success",
-  message: "User deleted successfully",
-});
+    status: "success",
+    message: "User deleted successfully",
+  });
 });
