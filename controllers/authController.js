@@ -98,15 +98,15 @@ exports.register = asyncHandler(async (req, res) => {
   await user.save();
   //try
   try {
-  await sendEmail({
-    email: user.email,
-    subject: "Verify your email",
-    message: `Your verification code is: ${otp}`,
-  });
+    sendEmail({
+      email: user.email,
+      subject: "Verify your email",
+      message: `Your verification code is: ${otp}`,
+    });
   } catch (err) {
-  console.log("Email failed but user created");
-}
-// 00000
+    console.log("Email failed but user created");
+  }
+  // 00000
   res.status(201).json({
     status: "success",
     message: "User registered. Please verify your email",
