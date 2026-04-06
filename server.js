@@ -4,7 +4,7 @@ const connectDB = require("./config/db");
 const dns = require("dns");
 dotenv.config();
 // dns servers
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
+dns.setDefaultResultOrder("ipv4first");
 // The server should run correctly after connecting to the database.
 const startServer = async () => {
   try {
