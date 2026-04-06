@@ -1,19 +1,7 @@
 const express = require("express");
 const app = express();
-const rateLimit = require("express-rate-limit");
-const helmet = require("helmet");
 
 app.use(express.json());
-app.use(helmet());
-
-// api limit
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 دقيقة
-  max: 100, // 100 طلب
-  message: "Too many requests, try again later",
-});
-
-app.use(limiter);
 
 // routes
 app.use("/api/auth", require("./routes/authRoute"));
