@@ -1,8 +1,4 @@
 const nodemailer = require("nodemailer");
-const dns = require("dns");
-
-dns.setDefaultResultOrder(["ipv6first"]);
-dns.setServers(["ipv6first"]);
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
