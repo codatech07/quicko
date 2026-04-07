@@ -1,4 +1,9 @@
 const nodemailer = require("nodemailer");
+const dns = require("dns");
+
+dns.setDefaultResultOrder(["1.1.1.1", "8.8.8.8"]);
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
