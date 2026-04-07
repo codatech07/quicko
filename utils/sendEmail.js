@@ -14,13 +14,22 @@ const sendEmail = async (options) => {
     text: options.message,
   };
   try {
-    console.log("before send email");
-    await transporter.sendMail(mailOptions);
-    console.log("after send email");
-    res.json({ message: "sent" });
-  } catch (error) {
-    console.log("wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww ", error);
-    res.status(500).json({ error: error.message });
-  }
+  console.log("before send email");
+
+  const info = await transporter.sendMail(mailOptions);
+
+  console.log("after send email", info);
+
+  return res.status(201).json({
+    message: "Email sent",
+  });
+
+} catch (error) {
+  console.log("EMAIL ERROR:", error);
+
+  return res.status(500).json({
+    error: error.message,
+  });
+}
 };
 module.exports = sendEmail;
