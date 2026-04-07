@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/response");
+
 // Create a token
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {

@@ -17,15 +17,18 @@ exports.createShop = asyncHandler(async (req, res) => {
     address,
     owner: req.user.id,
   });
-  res
-    .status(201)
-    .json({ message: "The shop has been successfully established", shop });
+  return successResponse(
+  res,
+  "Shop created successfully",
+  shop,
+  201
+);
 });
 
-// Bring all the shops
+// get all the shops
 exports.getShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find().populate("owner", "name username");
-  res.status(200).json({ message: "The shops were brought in", shops });
+  return successResponse(res, "Shops fetched successfully", shops);
 });
 
 // get shop by ID
