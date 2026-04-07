@@ -10,21 +10,17 @@ exports.protect = asyncHandler(async (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
   }
   if (!token) {
-    return res
-      .status(401)
-      .json({ status: "error", message: "No token, unauthorized" });
+    throw new AppError("No token, unauthorized", 401);
   }
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
     if (!user) {
-      return res
-        .status(401)
-        .json({ status: "error", message: "User not found" });
+      throw new AppError("User not found", 401);
     }
     req.user = { id: user._id, role: user.role };
     next();
   } catch (err) {
-    return res.status(401).json({ status: "error", message: "Invalid token" });
+    throw new AppError("Invalid token", 401);
   }
 });

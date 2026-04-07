@@ -1,5 +1,6 @@
 const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
+
 // create shop
 exports.createShop = asyncHandler(async (req, res) => {
   const { name, description, image, phone, address } = req.body;
@@ -20,12 +21,14 @@ exports.createShop = asyncHandler(async (req, res) => {
     .status(201)
     .json({ message: "The shop has been successfully established", shop });
 });
+
 // Bring all the shops
 exports.getShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find().populate("owner", "name username");
   res.status(200).json({ message: "The shops were brought in", shops });
 });
-// One shop brought
+
+// get shop by ID
 exports.getShopById = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id).populate(
     "owner",
@@ -36,8 +39,9 @@ exports.getShopById = asyncHandler(async (req, res) => {
     err.statusCode = 404;
     throw err;
   }
-  res.status(200).json({ message: "The shop was brought in", shop });
+  return successResponse(res, "Shop fetched successfully", shop);
 });
+
 // update shop information
 exports.updateShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
@@ -58,10 +62,9 @@ exports.updateShop = asyncHandler(async (req, res) => {
   shop.phone = req.body.phone || shop.phone;
   shop.address = req.body.address || shop.address;
   await shop.save();
-  res
-    .status(200)
-    .json({ message: "The store has been successfully updated", shop });
+  return successResponse(res, "Shop deleted successfully");
 });
+
 // Delete shop
 exports.deleteShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
@@ -77,5 +80,5 @@ exports.deleteShop = asyncHandler(async (req, res) => {
     throw err;
   }
   await shop.deleteOne();
-  res.status(200).json({ message: "The shop has been deleted" });
+  return successResponse(res, "Shop deleted successfully");
 });

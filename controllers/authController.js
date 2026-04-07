@@ -4,12 +4,14 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const AppError = require("../utils/AppError");
 // Create a token
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
+
 // Register
 exports.register = asyncHandler(async (req, res) => {
   let { name, username, email, phone, password, confirmPassword } = req.body;
@@ -25,9 +27,7 @@ exports.register = asyncHandler(async (req, res) => {
   }
   // Check the fields
   if (!name || !username || !email || !phone || !password || !confirmPassword) {
-    const err = new Error("All fields are required");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("All fields are required", 400);
   }
   // username
   if (username.length < 3) {
@@ -38,9 +38,7 @@ exports.register = asyncHandler(async (req, res) => {
   // email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    const err = new Error("The email address is invalid");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("The email address is invalid", 400);
   }
   // phone
   const phoneRegex = /^[0-9]{8,15}$/;
@@ -67,9 +65,7 @@ exports.register = asyncHandler(async (req, res) => {
   // username match
   const usernameExists = await User.findOne({ username });
   if (usernameExists) {
-    const err = new Error("Username already in use");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Username already in use", 400);
   }
   // email match
   const emailExists = await User.findOne({ email });
@@ -107,10 +103,12 @@ exports.register = asyncHandler(async (req, res) => {
     console.log("Email failed but user created");
   }
   // 00000
-  res.status(201).json({
-    status: "success",
-    message: "User registered. Please verify your email",
-  });
+  return successResponse(
+    res,
+    "User registered. Please verify your email",
+    null,
+    201,
+  );
 });
 
 // Login
@@ -131,9 +129,7 @@ exports.login = asyncHandler(async (req, res) => {
     : { username: identifier.toLowerCase() };
   const user = await User.findOne(query).select("+password");
   if (!user) {
-    const err = new Error("User not found");
-    err.statusCode = 404;
-    throw err;
+    throw new AppError("User not found", 404);
   }
   // is email validate
   if (!user.isVerified) {
@@ -155,13 +151,10 @@ exports.login = asyncHandler(async (req, res) => {
   // Password verification
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    const err = new Error("Incorrect password");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Incorrect password", 400);
   }
   const token = createToken(user._id);
-  res.status(200).json({
-    message: "Login successful",
+  return successResponse(res, "Login successful", {
     token,
     user: {
       id: user._id,
@@ -179,15 +172,11 @@ exports.login = asyncHandler(async (req, res) => {
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    const err = new Error("Email is required");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Email is required", 400);
   }
   const user = await User.findOne({ email });
   if (!user) {
-    const err = new Error("User not found");
-    err.statusCode = 404;
-    throw err;
+    throw new AppError("User not found", 404);
   }
   const now = Date.now();
   // reset evry day
@@ -196,16 +185,12 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   }
   // If the limit is reached
   if (user.otpAttempts >= 5) {
-    const err = new Error("You reached max OTP requests today");
-    err.statusCode = 429;
-    throw err;
+    throw new AppError("You reached max OTP requests today", 429);
   }
   // Attempts 4 and 5 require waiting.
   if (user.otpAttempts >= 3) {
     if (user.otpLastAttempt && now - user.otpLastAttempt < 30 * 60 * 1000) {
-      const err = new Error("Wait 30 minutes before requesting again");
-      err.statusCode = 429;
-      throw err;
+      throw new AppError("Wait 30 minutes before requesting again", 429);
     }
   }
   // create OTP
@@ -220,7 +205,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     subject: "Password Reset Code",
     message,
   });
-  res.status(200).json({ status: "success", message: "OTP sent to email" });
+  return successResponse(res, "OTP sent to email");
 });
 
 // verify otp
@@ -238,27 +223,20 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
     resetPasswordExpire: { $gt: Date.now() },
   });
   if (!user) {
-    const err = new Error("Invalid or expired OTP");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Invalid or expired OTP", 400);
   }
   user.resetPasswordOTP = undefined;
   user.resetPasswordExpire = undefined;
   await user.save();
 
-  res.status(200).json({
-    status: "success",
-    message: "OTP verified successfully",
-  });
+  return successResponse(res, "OTP verified successfully");
 });
 
 // reset password
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
   if (!email || !otp || !password || !confirmPassword) {
-    const err = new Error("All fields are required");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("All fields are required", 400);
   }
   if (password.includes(" ")) {
     const err = new Error("Password cannot contain spaces");
@@ -266,14 +244,10 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     throw err;
   }
   if (password.length < 6) {
-    const err = new Error("Password too short");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Password too short", 400);
   }
   if (password !== confirmPassword) {
-    const err = new Error("Passwords do not match");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Passwords do not match", 400);
   }
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
   const user = await User.findOne({
@@ -282,18 +256,15 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     resetPasswordExpire: { $gt: Date.now() },
   });
   if (!user) {
-    const err = new Error("OTP invalid or expired");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("OTP invalid or expired", 400);
   }
   user.password = await bcrypt.hash(password, 12);
   user.resetPasswordOTP = undefined;
   user.resetPasswordExpire = undefined;
   await user.save();
-  res
-    .status(200)
-    .json({ status: "success", message: "Password reset successful" });
+  return successResponse(res, "Password reset successful");
 });
+
 // verify Email
 exports.verifyEmail = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
@@ -313,9 +284,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   });
   // 4️⃣ إذا الكود غلط أو منتهي
   if (!user) {
-    const err = new Error("Invalid or expired OTP");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Invalid or expired OTP", 400);
   }
   // 5️⃣ تفعيل الحساب
   user.isVerified = true;
@@ -324,9 +293,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   const token = createToken(user._id);
   await user.save();
   // 6️⃣ الرد
-  res.status(200).json({
-    status: "success",
-    message: "Email verified successfully",
+  return successResponse(res, "Email verified successfully", {
     token,
     user: {
       id: user._id,
@@ -342,7 +309,5 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
 
 // log out
 exports.logout = asyncHandler(async (req, res) => {
-  res
-    .status(200)
-    .json({ status: "success", message: "Logged out successfully" });
+  return successResponse(res, "Logged out successfully");
 });

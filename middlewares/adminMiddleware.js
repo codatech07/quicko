@@ -2,13 +2,10 @@ const asyncHandler = require("express-async-handler");
 // Admin verification
 exports.isAdmin = asyncHandler(async (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ message: "Not logged in" });
+    throw new AppError("Not logged in", 401);
   }
   if (req.user.role !== "admin") {
-    return res.status(403).json({
-      status: "error",
-      message: "Not allowed, admin privileges required",
-    });
+    throw new AppError("Not allowed, admin privileges required", 403);
   }
   next();
 });
