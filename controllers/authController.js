@@ -93,7 +93,7 @@ exports.register = asyncHandler(async (req, res) => {
   }
   return successResponse(
     res,
-    `User registered. Please verify your email / your code is : ${otp}`,
+    `User registered. Please verify your email`,
     null,
     201,
   );
@@ -132,8 +132,9 @@ exports.login = asyncHandler(async (req, res) => {
     } catch (error) {
       console.log("Email failed log in");
     }
-    throw new AppError(
-      `Account not verified. A new OTP has been sent to your email / code is: ${otp}`,
+    return errorResponse(
+      res,
+      `Account not verified. A new OTP has been sent to your email`,
       403,
     );
   }
@@ -199,7 +200,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   } catch (error) {
     console.log("Email failed but forget password");
   }
-  return successResponse(res, `OTP sent to email  /  code is: ${otp}`);
+  return successResponse(res, `OTP sent to email`);
 });
 
 // verify otp
