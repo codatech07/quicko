@@ -94,7 +94,6 @@ exports.register = asyncHandler(async (req, res) => {
   return successResponse(
     res,
     `User registered. Please verify your email`,
-    null,
     201,
   );
 });
@@ -135,7 +134,6 @@ exports.login = asyncHandler(async (req, res) => {
     return errorResponse(
       res,
       `Account not verified. A new OTP has been sent to your email`,
-      403,
     );
   }
   // Password verification

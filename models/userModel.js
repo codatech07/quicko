@@ -63,7 +63,7 @@ userSchema.methods.createEmailVerificationOTP = function () {
     .createHash("sha256")
     .update(otp)
     .digest("hex");
-  this.emailVerificationExpire = Date.now() + 10 * 60 * 1000;
+  this.emailVerificationExpire = Date.now() + 60 * 60 * 1000;
   return otp;
 };
 module.exports = mongoose.model("User", userSchema);

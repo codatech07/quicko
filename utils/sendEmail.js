@@ -117,13 +117,7 @@ const sendEmail = async (options) => {
         </div>
       `,
     };
-
-    console.log("before send email");
-
     await apiInstance.sendTransacEmail(sendSmtpEmail);
-
-    console.log("after send email");
-
   } catch (err) {
     console.log("BREVO ERROR:", err.response?.body || err.message);
     throw new AppError("Email sending failed", 500);
