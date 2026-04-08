@@ -7,3 +7,11 @@ exports.errorResponse = (res, message, data, statusCode = 400) => {
 exports.successCreateResponse = (res, message, statusCode = 201) => {
   return res.status(statusCode).json({ status: "success", message });
 };
+
+// CHECK AVAILABILITY RESPONSES
+exports.successResponseForAvailability = (res,message, statusCode = 200) => {
+  return res.status(statusCode).json({ message });
+};
+exports.errorResponseForAvailability = (res,message, statusCode = 409) => {
+  return res.status(statusCode).json({ message });
+};

@@ -7,6 +7,7 @@ const {
   verifyOTP,
   verifyEmail,
   logout,
+  checkAvailability,
 } = require("../controllers/authController");
 const { protect } = require("../middlewares/authMiddleware.js");
 const router = express.Router();
@@ -17,6 +18,8 @@ router.post("/verify-otp", verifyOTP);
 router.post("/reset-password", resetPassword);
 router.post("/verify-email", verifyEmail);
 router.post("/logout", protect, logout);
+// CHECK AVAILABILITY
+router.get("/check-availability", checkAvailability);
 // Route protected
 const User = require("../models/userModel");
 router.get("/me", protect, async (req, res) => {

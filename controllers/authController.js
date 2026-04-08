@@ -9,6 +9,8 @@ const {
   successResponse,
   errorResponse,
   successCreateResponse,
+  errorResponseForAvailability,
+  successResponseForAvailability,
 } = require("../utils/response");
 
 // Create a token
@@ -299,3 +301,42 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
 exports.logout = asyncHandler(async (req, res) => {
   return successResponse(res, "Logged out successfully");
 });
+
+
+
+// CHECK AVAILABILITY
+exports.checkAvailability = asyncHandler(async (req, res) => {
+  const { username, email, phone } = req.query;
+  // There must be only one parameter
+  if (!username && !email && !phone) {
+    throw new AppError("Please provide username or email or phone", 400);
+  }
+  // username availability
+  if (username) {
+    const normalizedUsername = username.trim().toLowerCase();
+    const exists = await User.findOne({ username: normalizedUsername });
+    if (exists) {
+      return errorResponseForAvailability(res, "Username already in use");
+    }
+    return successResponseForAvailability(res, "Username available");
+  }
+  // email
+  if (email) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const exists = await User.findOne({ email: normalizedEmail });
+    if (exists) {
+      return errorResponseForAvailability(res, "Email already in use");
+    }
+    return successResponseForAvailability(res, "Email available");
+  }
+  // phone
+  if (phone) {
+    const normalizedPhone = phone.trim();
+    const exists = await User.findOne({ phone: normalizedPhone });
+    if (exists) {
+      return errorResponseForAvailability(res, "Phone already in use");
+    }
+    return successResponseForAvailability(res, "Phone available");
+  }
+});
+
