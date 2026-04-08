@@ -303,13 +303,15 @@ exports.logout = asyncHandler(async (req, res) => {
   return successResponse(res, "Logged out successfully");
 });
 
-
 // CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {
   const { username, email, phone } = req.query;
   // There must be only one parameter
   if (!username && !email && !phone) {
-    return errorResponseForAvailabilityNoData(res, "Please provide username or email or phone");
+    return errorResponseForAvailabilityNoData(
+      res,
+      "Please provide username or email or phone",
+    );
   }
   // username availability
   if (username) {
@@ -339,4 +341,3 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
     return successResponseForAvailability(res, "Phone available");
   }
 });
-

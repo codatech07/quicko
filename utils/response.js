@@ -9,12 +9,16 @@ exports.successCreateResponse = (res, message, statusCode = 201) => {
 };
 
 // CHECK AVAILABILITY RESPONSES
-exports.successResponseForAvailability = (res,message, statusCode = 200) => {
+exports.successResponseForAvailability = (res, message, statusCode = 200) => {
   return res.status(statusCode).json({ message });
 };
-exports.errorResponseForAvailability = (res,message, statusCode = 409) => {
+exports.errorResponseForAvailability = (res, message, statusCode = 409) => {
   return res.status(statusCode).json({ message });
 };
-exports.errorResponseForAvailabilityNoData = (res,message, statusCode = 400) => {
+exports.errorResponseForAvailabilityNoData = (
+  res,
+  message,
+  statusCode = 400,
+) => {
   return res.status(statusCode).json({ message });
 };
