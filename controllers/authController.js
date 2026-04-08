@@ -11,6 +11,7 @@ const {
   successCreateResponse,
   errorResponseForAvailability,
   successResponseForAvailability,
+  errorResponseForAvailabilityNoData,
 } = require("../utils/response");
 
 // Create a token
@@ -303,13 +304,12 @@ exports.logout = asyncHandler(async (req, res) => {
 });
 
 
-
 // CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {
   const { username, email, phone } = req.query;
   // There must be only one parameter
   if (!username && !email && !phone) {
-    throw new AppError("Please provide username or email or phone", 400);
+    return errorResponseForAvailabilityNoData(res, "Please provide username or email or phone");
   }
   // username availability
   if (username) {

@@ -15,3 +15,6 @@ exports.successResponseForAvailability = (res,message, statusCode = 200) => {
 exports.errorResponseForAvailability = (res,message, statusCode = 409) => {
   return res.status(statusCode).json({ message });
 };
+exports.errorResponseForAvailabilityNoData = (res,message, statusCode = 400) => {
+  return res.status(statusCode).json({ message });
+};
