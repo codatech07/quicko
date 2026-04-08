@@ -130,7 +130,7 @@ exports.login = asyncHandler(async (req, res) => {
         message: `Your verification code is: ${otp}`,
       });
     } catch (error) {
-      console.log("Email failed but user created");
+      console.log("Email failed log in");
     }
     throw new AppError(
       `Account not verified. A new OTP has been sent to your email / code is: ${otp}`,
@@ -197,7 +197,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       message,
     });
   } catch (error) {
-    console.log("Email failed but user created");
+    console.log("Email failed but forget password");
   }
   return successResponse(res, `OTP sent to email  /  code is: ${otp}`);
 });

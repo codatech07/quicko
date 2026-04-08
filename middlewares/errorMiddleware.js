@@ -1,7 +1,7 @@
 const AppError = require("../utils/AppError");
 
 const errorHandler = (err, req, res, next) => {
-  console.error("💥 ERROR:", err);
+  console.error("ERROR:", err);
 
   let statusCode = err.statusCode || 500;
   let message = err.message || "Something went wrong";
