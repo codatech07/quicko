@@ -5,7 +5,11 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 const AppError = require("../utils/AppError");
-const { successResponse, errorResponse } = require("../utils/response");
+const {
+  successResponse,
+  errorResponse,
+  successCreateResponse,
+} = require("../utils/response");
 
 // Create a token
 const createToken = (id) => {
@@ -91,10 +95,9 @@ exports.register = asyncHandler(async (req, res) => {
   } catch (err) {
     console.log("Email failed but user created");
   }
-  return successResponse(
+  return successCreateResponse(
     res,
     `User registered. Please verify your email`,
-    201,
   );
 });
 
