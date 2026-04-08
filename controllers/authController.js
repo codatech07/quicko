@@ -51,6 +51,7 @@ exports.register = asyncHandler(async (req, res) => {
       400,
     );
   }
+
   // Password match
   if (password !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
@@ -142,7 +143,7 @@ exports.login = asyncHandler(async (req, res) => {
     throw new AppError("Incorrect password", 400);
   }
   const token = createToken(user._id);
-  return successResponse(res, "Login successful", {
+  return successResponse(res, "Login successfull", {
     token,
     user: {
       id: user._id,
