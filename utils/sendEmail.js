@@ -44,8 +44,11 @@ const sendEmail = async (options) => {
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // App Password
+        pass: process.env.EMAIL_PASS,
       },
+      connectionTimeout: 10000, // ⏱️ مهم جداً
+      greetingTimeout: 5000,
+      socketTimeout: 10000,
     });
 
     const mailOptions = {
@@ -68,6 +71,9 @@ const sendEmail = async (options) => {
     };
 
     console.log("before send email");
+
+    await transporter.verify();
+    console.log("SMTP ready");
 
     const info = await transporter.sendMail(mailOptions);
 
