@@ -65,11 +65,13 @@ const errorHandler = (err, req, res, next) => {
   return res.status(statusCode).json({
     status: "error",
     message,
+     ...(process.env.SHOW_STACK === "true" && {
     location: errorLocation,
     stack: err.stack,
     timestamp: new Date().toISOString(),
     path: req.originalUrl,
     method: req.method,
+    }),
   });
 };
 
