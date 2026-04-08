@@ -1,17 +1,21 @@
+const AppError = require("../utils/AppError");
+
 const errorHandler = (err, req, res, next) => {
-  console.error("ERROR:", err);
+  console.error("💥 ERROR:", err);
 
   let statusCode = err.statusCode || 500;
-  let message = err.message || "Internal Server Error";
+  let message = err.message || "Something went wrong";
 
-  // Mongo duplicate
+  // Mongo Errors
+
+  // Duplicate key
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
     message = `${field} already in use`;
     statusCode = 400;
   }
 
-  // Validation error
+  // Validation
   if (err.name === "ValidationError") {
     message = Object.values(err.errors)
       .map((el) => el.message)
@@ -19,16 +23,53 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 400;
   }
 
-  // Cast error (invalid ID)
+  // Invalid ObjectId
   if (err.name === "CastError") {
     message = "Invalid ID format";
     statusCode = 400;
   }
 
-  res.status(statusCode).json({
+  // JWT Errors
+
+  if (err.name === "JsonWebTokenError") {
+    message = "Invalid token";
+    statusCode = 401;
+  }
+
+  if (err.name === "TokenExpiredError") {
+    message = "Token expired";
+    statusCode = 401;
+  }
+
+  // JSON Parse Error
+
+  if (err.type === "entity.parse.failed") {
+    message = "Invalid JSON format";
+    statusCode = 400;
+  }
+
+  // Extract Error Location
+  let errorLocation = null;
+
+  if (err.stack) {
+    const stackLines = err.stack.split("\n");
+
+    const relevantLine = stackLines.find(
+      (line) => line.includes(process.cwd()) && !line.includes("node_modules"),
+    );
+
+    errorLocation = relevantLine ? relevantLine.trim() : null;
+  }
+
+  // Response (FULL DEBUG ALWAYS)
+  return res.status(statusCode).json({
     status: "error",
     message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    location: errorLocation,
+    stack: err.stack,
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl,
+    method: req.method,
   });
 };
 

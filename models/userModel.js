@@ -11,20 +11,45 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       minlength: 3,
     },
-    email: { type: String, required: true, unique: true, lowercase: true },
-    phone: { type: String, required: true, unique: true },
-    password: { type: String, required: true, minlength: 6, select: false },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    phone: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      select: false,
+    },
     resetPasswordOTP: String,
     resetPasswordExpire: Date,
-    otpAttempts: { type: Number, default: 0 },
+    otpAttempts: {
+      type: Number,
+      default: 0,
+    },
     otpLastAttempt: Date,
-    role: { type: String, enum: ["user", "admin"], default: "user" },
-    isVerified: { type: Boolean, default: false },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
   },
   { timestamps: true },
 );
+
 // password update
 userSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();

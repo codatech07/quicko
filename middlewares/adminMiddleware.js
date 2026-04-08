@@ -1,4 +1,6 @@
 const asyncHandler = require("express-async-handler");
+const AppError = require("../utils/AppError");
+
 // Admin verification
 exports.isAdmin = asyncHandler(async (req, res, next) => {
   if (!req.user) {

@@ -11,10 +11,10 @@ app.use("/api/users", require("./routes/userRoute"));
 // shops
 app.use("/api/shops", require("./routes/shopRoute"));
 // route not found handler
+const AppError = require("./utils/AppError");
+
 app.all(/.*/, (req, res, next) => {
-  const err = new Error(`Can't find ${req.originalUrl} on this server`);
-  err.statusCode = 404;
-  next(err);
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
 // // error middleware
 const errorHandler = require("./middlewares/errorMiddleware");

@@ -1,13 +1,13 @@
 const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
+const { successResponse } = require("../utils/response");
+const AppError = require("../utils/AppError");
 
 // create shop
 exports.createShop = asyncHandler(async (req, res) => {
   const { name, description, image, phone, address } = req.body;
   if (!name || !phone || !address) {
-    const err = new Error("Name and Phone and Address Required");
-    err.statusCode = 400;
-    throw err;
+    throw new AppError("Name and Phone and Address Required", 400);
   }
   const shop = await Shop.create({
     name,
@@ -17,12 +17,7 @@ exports.createShop = asyncHandler(async (req, res) => {
     address,
     owner: req.user.id,
   });
-  return successResponse(
-  res,
-  "Shop created successfully",
-  shop,
-  201
-);
+  return successResponse(res, "Shop created successfully", shop, 201);
 });
 
 // get all the shops
@@ -38,9 +33,7 @@ exports.getShopById = asyncHandler(async (req, res) => {
     "name username",
   );
   if (!shop) {
-    const err = new Error("The shop is not there");
-    err.statusCode = 404;
-    throw err;
+    throw new AppError("The shop is not there", 404);
   }
   return successResponse(res, "Shop fetched successfully", shop);
 });
@@ -49,15 +42,11 @@ exports.getShopById = asyncHandler(async (req, res) => {
 exports.updateShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
   if (!shop) {
-    const err = new Error("The shop is not there");
-    err.statusCode = 404;
-    throw err;
+    throw new AppError("The shop is not there", 404);
   }
   // 🔒 فقط admin
   if (req.user.role !== "admin") {
-    const err = new Error("Not authorized, admin only");
-    err.statusCode = 403;
-    throw err;
+    throw new AppError("Not authorized, admin only", 403);
   }
   shop.name = req.body.name || shop.name;
   shop.description = req.body.description || shop.description;
@@ -65,23 +54,19 @@ exports.updateShop = asyncHandler(async (req, res) => {
   shop.phone = req.body.phone || shop.phone;
   shop.address = req.body.address || shop.address;
   await shop.save();
-  return successResponse(res, "Shop deleted successfully");
+  return successResponse(res, "Shop updated successfully");
 });
 
 // Delete shop
 exports.deleteShop = asyncHandler(async (req, res) => {
   const shop = await Shop.findById(req.params.id);
   if (!shop) {
-    const err = new Error("The shop is not there");
-    err.statusCode = 404;
-    throw err;
+    throw new AppError("The shop is not there", 404);
   }
-  // 🔒 فقط admin
+  //  only admin
   if (req.user.role !== "admin") {
-    const err = new Error("Not authorized, admin only");
-    err.statusCode = 403;
-    throw err;
+    throw new AppError("Not authorized, admin only", 403);
   }
   await shop.deleteOne();
-  return successResponse(res, "Shop deleted successfully");
+  return successResponse(res, "Shop deleted successfully", 204);
 });
