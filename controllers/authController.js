@@ -127,6 +127,11 @@ exports.login = asyncHandler(async (req, res) => {
   if (!user) {
     throw new AppError("User not found", 404);
   }
+  // Password verification
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new AppError("Incorrect password", 400);
+  }
   // is email validate
   if (!user.isVerified) {
     //  create new otp
@@ -147,11 +152,7 @@ exports.login = asyncHandler(async (req, res) => {
       `Account not verified. A new OTP has been sent to your email`,
     );
   }
-  // Password verification
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new AppError("Incorrect password", 400);
-  }
+  
   const token = createToken(user._id);
   return successResponse(res, "Login successfull", {
     token,
