@@ -89,13 +89,12 @@ exports.register = asyncHandler(async (req, res) => {
     password: hashedPassword,
   });
   const otp = user.createEmailVerificationOTP();
-  // await user.save();
+  await user.save();
   try {
     await sendEmail({
       email: user.email,
       subject: "Verify your email",
       message: `Your verification code is: ${otp}`,
-
     });
   } catch (err) {
     console.log("Email failed but user created");
@@ -196,7 +195,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   user.otpLastAttempt = now;
   await user.save({ validateBeforeSave: false });
   const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
-const message = `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`;
+  const message = `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`;
 
   try {
     await sendEmail({
