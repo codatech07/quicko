@@ -21,27 +21,29 @@ const createToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
-
-// Register
+//  
+//  [1] REGISTER USER
 exports.register = asyncHandler(async (req, res) => {
+  // Extract and normalize input
   let { name, username, email, phone, password, confirmPassword } = req.body;
   // Data cleaning
   name = name.trim();
   username = username.trim().toLowerCase();
   email = email.trim().toLowerCase();
   phone = phone.trim();
+  // Prevent spaces in password (security rule)
   if (password.includes(" ")) {
     throw new AppError("The password cannot contain spaces", 400);
   }
-  // Check the fields
+  // // Ensure all fields exist
   if (!name || !username || !email || !phone || !password || !confirmPassword) {
     throw new AppError("All fields are required", 400);
   }
-  // username
+  // // Username validation
   if (username.length < 3) {
     throw new AppError("The username must be at least 3 characters long", 400);
   }
-  // email format
+  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     throw new AppError("The email address is invalid", 400);
@@ -51,7 +53,7 @@ exports.register = asyncHandler(async (req, res) => {
   if (!phoneRegex.test(phone)) {
     throw new AppError("Invalid phone number", 400);
   }
-  // password (Medium strength)
+  // password (Medium strength) Password strength validation
   const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=\S+$).{6,}$/;
   if (!passwordRegex.test(password)) {
     throw new AppError(
@@ -60,21 +62,21 @@ exports.register = asyncHandler(async (req, res) => {
     );
   }
 
-  // Password match
+  // Check password match
   if (password !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
   }
-  // username match
+  // Check username match
   const usernameExists = await User.findOne({ username });
   if (usernameExists) {
     throw new AppError("Username already in use", 400);
   }
-  // email match
+  // Check email match
   const emailExists = await User.findOne({ email });
   if (emailExists) {
     throw new AppError("The email address is already in use", 400);
   }
-  // phone match
+  // Check phone match
   const phoneExists = await User.findOne({ phone });
   if (phoneExists) {
     throw new AppError("Phone number already in use", 400);
@@ -88,8 +90,10 @@ exports.register = asyncHandler(async (req, res) => {
     phone,
     password: hashedPassword,
   });
+  // Generate email OTP
   const otp = user.createEmailVerificationOTP();
   await user.save();
+  // Send verification email
   try {
     await sendEmail({
       email: user.email,
@@ -105,7 +109,7 @@ exports.register = asyncHandler(async (req, res) => {
   );
 });
 
-// Login
+//  [2] LOGIN USER
 exports.login = asyncHandler(async (req, res) => {
   let { identifier, password } = req.body;
   // Data cleaning
@@ -163,7 +167,7 @@ exports.login = asyncHandler(async (req, res) => {
   });
 });
 
-// FORGOT PASSWORD
+//  [3] FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -174,7 +178,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     throw new AppError("User not found", 404);
   }
   const now = Date.now();
-  // reset evry day
+  // // Reset OTP limit every 24h
   if (user.otpLastAttempt && now - user.otpLastAttempt > 24 * 60 * 60 * 1000) {
     user.otpAttempts = 0;
   }
@@ -209,7 +213,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   return successResponse(res, `OTP sent to email`);
 });
 
-// verify otp
+//  [4] VERIFY EMAIL OTP
 exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) {
