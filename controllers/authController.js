@@ -21,7 +21,7 @@ const createToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
-//  
+//
 //  [1] REGISTER USER
 exports.register = asyncHandler(async (req, res) => {
   // Extract and normalize input
@@ -152,7 +152,6 @@ exports.login = asyncHandler(async (req, res) => {
       `Account not verified. A new OTP has been sent to your email`,
     );
   }
-  
   const token = createToken(user._id);
   return successResponse(res, "Login successfull", {
     token,
@@ -214,7 +213,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   return successResponse(res, `OTP sent to email`);
 });
 
-//  [4] VERIFY EMAIL OTP
+//  [4] VERIFY EMAIL OTP for password
 exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) {
@@ -234,7 +233,7 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   return successResponse(res, "OTP verified successfully");
 });
 
-// reset password
+//  [5] reset password
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
   if (!email || !otp || !password || !confirmPassword) {
@@ -265,7 +264,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   return successResponse(res, "Password reset successful");
 });
 
-// verify Email
+//  [6] verify Email after register :
 exports.verifyEmail = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   // 1️⃣ تحقق من البيانات
