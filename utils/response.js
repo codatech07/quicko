@@ -22,3 +22,12 @@ exports.errorResponseForAvailabilityNoData = (
 ) => {
   return res.status(statusCode).json({ message });
 };
+
+// 400 error respone
+exports.errorResponseForHandred = (
+  res,
+  message,
+  statusCode = 400,
+) => {
+  return res.status(statusCode).json({ message });
+};

@@ -12,6 +12,7 @@ const {
   errorResponseForAvailability,
   successResponseForAvailability,
   errorResponseForAvailabilityNoData,
+  errorResponseForHandred,
 } = require("../utils/response");
 
 // Create a token
@@ -193,7 +194,8 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   user.otpAttempts += 1;
   user.otpLastAttempt = now;
   await user.save({ validateBeforeSave: false });
-  const message = `Your password reset code is: ${otp} This code will expire in 10 minutes.`;
+  const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
+const message = `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`;
 
   try {
     await sendEmail({
@@ -316,24 +318,41 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
   // username availability
   if (username) {
     const normalizedUsername = username.trim().toLowerCase();
+    // user name lenght
+    if (normalizedUsername.length < 3) {
+      return errorResponseForHandred(
+        res,
+        "Username must be at least 3 characters long",
+      );
+    }
     const exists = await User.findOne({ username: normalizedUsername });
     if (exists) {
       return errorResponseForAvailability(res, "Username already in use");
     }
     return successResponseForAvailability(res, "Username available");
   }
-  // email
+  // email availability
   if (email) {
     const normalizedEmail = email.trim().toLowerCase();
+    // email or not email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return errorResponseForHandred(res, "Invalid email format");
+    }
     const exists = await User.findOne({ email: normalizedEmail });
     if (exists) {
       return errorResponseForAvailability(res, "Email already in use");
     }
     return successResponseForAvailability(res, "Email available");
   }
-  // phone
+  // phone availability
   if (phone) {
     const normalizedPhone = phone.trim();
+    // phone lenght
+    const phoneRegex = /^[0-9]{8,15}$/;
+    if (!phoneRegex.test(normalizedPhone)) {
+      return errorResponseForHandred(res, "Invalid phone number");
+    }
     const exists = await User.findOne({ phone: normalizedPhone });
     if (exists) {
       return errorResponseForAvailability(res, "Phone already in use");

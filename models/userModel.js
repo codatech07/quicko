@@ -54,7 +54,8 @@ const userSchema = new mongoose.Schema(
 userSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   this.resetPasswordOTP = crypto.createHash("sha256").update(otp).digest("hex");
-  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+  const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
+  this.resetPasswordExpire = Date.now() + otpExpire * 60 * 1000;
   return otp;
 };
 userSchema.methods.createEmailVerificationOTP = function () {
@@ -63,7 +64,8 @@ userSchema.methods.createEmailVerificationOTP = function () {
     .createHash("sha256")
     .update(otp)
     .digest("hex");
-  this.emailVerificationExpire = Date.now() + 60 * 60 * 1000;
+  const emailOtpExpire = Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 60;
+  this.emailVerificationExpire = Date.now() + emailOtpExpire * 60 * 1000;
   return otp;
 };
 module.exports = mongoose.model("User", userSchema);
