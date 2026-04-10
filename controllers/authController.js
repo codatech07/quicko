@@ -278,28 +278,30 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 //  [6] verify Email after register :
 exports.verifyEmail = asyncHandler(async (req, res) => {
   let { email, otp } = req.body;
+
   email = email.trim().toLowerCase();
   otp = otp.trim();
-  // 1️⃣ تحقق من البيانات
+
   if (!email || !otp) {
     throw new AppError("Email and OTP required", 400);
   }
-  // // 2️⃣ تشفير OTP للمقارنة
-  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
-  // 3️⃣ البحث عن المستخدم
+
+  const hashedOTP = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
   const pendingUser = await PendingUser.findOne({
-    email: email.toLowerCase(),
+    email,
     emailVerificationOTP: hashedOTP,
     emailVerificationExpire: { $gt: Date.now() },
   });
-  // 4️⃣ إذا الكود غلط أو منتهي
-  if (!user) {
+
+  if (!pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
-  // 5️⃣ تفعيل الحساب
-  pendingUser.emailVerificationOTP = undefined;
-  pendingUser.emailVerificationExpire = undefined;
-  // await user.save();
+
+  // ✅ إنشاء المستخدم أولاً
   const user = await User.create({
     name: pendingUser.name,
     username: pendingUser.username,
@@ -308,8 +310,11 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     password: pendingUser.password,
     isVerified: true,
   });
+
+  // ✅ حذف pending بعد الإنشاء
   await PendingUser.deleteOne({ _id: pendingUser._id });
-  // 6️⃣ الرد
+
+  // ✅ الرد
   return successResponse(res, "Email verified successfully", {
     user: {
       id: user._id,
