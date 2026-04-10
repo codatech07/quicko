@@ -286,10 +286,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     throw new AppError("Email and OTP required", 400);
   }
 
-  const hashedOTP = crypto
-    .createHash("sha256")
-    .update(otp)
-    .digest("hex");
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
 
   const pendingUser = await PendingUser.findOne({
     email,
