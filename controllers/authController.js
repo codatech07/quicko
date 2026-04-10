@@ -278,6 +278,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 //  [6] verify Email after register :
 exports.verifyEmail = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
+  email = email.trim().toLowerCase();
+otp = otp.trim();
   // 1️⃣ تحقق من البيانات
   if (!email || !otp) {
     throw new AppError("Email and OTP required", 400);
@@ -295,7 +297,6 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     throw new AppError("Invalid or expired OTP", 400);
   }
   // 5️⃣ تفعيل الحساب
-  pendingUser.isVerified = true;
   pendingUser.emailVerificationOTP = undefined;
   pendingUser.emailVerificationExpire = undefined;
   // await user.save();
@@ -305,7 +306,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     email: pendingUser.email,
     phone: pendingUser.phone,
     password: pendingUser.password,
-    isVerified: pendingUser.isVerified,
+    isVerified: true,
   });
   await PendingUser.deleteOne({ _id: pendingUser._id });
   // 6️⃣ الرد
