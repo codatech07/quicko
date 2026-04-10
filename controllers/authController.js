@@ -22,7 +22,7 @@ const createToken = (id) => {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
-//
+
 //  [1] REGISTER USER
 exports.register = asyncHandler(async (req, res) => {
   // Extract and normalize input
@@ -62,7 +62,6 @@ exports.register = asyncHandler(async (req, res) => {
       400,
     );
   }
-
   // Check password match
   if (password !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
@@ -84,15 +83,6 @@ exports.register = asyncHandler(async (req, res) => {
   }
   // password encryption
   const hashedPassword = await bcrypt.hash(password, 12);
-  // 1
-  // const user = new User({
-  //   name,
-  //   username,
-  //   email,
-  //   phone,
-  //   password: hashedPassword,
-  // });
-  // 1
   const pendingUser = new PendingUser({
     name,
     username,
@@ -100,7 +90,6 @@ exports.register = asyncHandler(async (req, res) => {
     phone,
     password: hashedPassword,
   });
-
   // Generate email OTP
   const otp = pendingUser.createEmailVerificationOTP();
   await pendingUser.save();
@@ -120,7 +109,49 @@ exports.register = asyncHandler(async (req, res) => {
   );
 });
 
-//  [2] LOGIN USER
+//  [2] verify Email after register :
+exports.verifyEmail = asyncHandler(async (req, res) => {
+  let { email, otp } = req.body;
+  email = email.trim().toLowerCase();
+  otp = otp.trim();
+  if (!email || !otp) {
+    throw new AppError("Email and OTP required", 400);
+  }
+  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+  const pendingUser = await PendingUser.findOne({
+    email,
+    emailVerificationOTP: hashedOTP,
+    emailVerificationExpire: { $gt: Date.now() },
+  });
+  if (!pendingUser) {
+    throw new AppError("Invalid or expired OTP", 400);
+  }
+  // create user in db user
+  const user = await User.create({
+    name: pendingUser.name,
+    username: pendingUser.username,
+    email: pendingUser.email,
+    phone: pendingUser.phone,
+    password: pendingUser.password,
+    isVerified: true,
+  });
+  // delete pending user from db pending user
+  await PendingUser.deleteOne({ _id: pendingUser._id });
+  // Response
+  return successResponse(res, "Email verified successfully", {
+    user: {
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isVerified: user.isVerified,
+    },
+  });
+});
+
+//  [3] LOGIN USER
 exports.login = asyncHandler(async (req, res) => {
   let { identifier, password } = req.body;
   // Data cleaning
@@ -178,7 +209,7 @@ exports.login = asyncHandler(async (req, res) => {
   });
 });
 
-//  [3] FORGOT PASSWORD
+//  [4] FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -224,7 +255,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   return successResponse(res, `OTP sent to email`);
 });
 
-//  [4] VERIFY EMAIL OTP for password
+//  [5] VERIFY EMAIL OTP for password
 exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) {
@@ -244,7 +275,7 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   return successResponse(res, "OTP verified successfully");
 });
 
-//  [5] reset password
+//  [6] reset password
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
   if (!email || !otp || !password || !confirmPassword) {
@@ -273,56 +304,6 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   user.resetPasswordExpire = undefined;
   await user.save();
   return successResponse(res, "Password reset successful");
-});
-
-//  [6] verify Email after register :
-exports.verifyEmail = asyncHandler(async (req, res) => {
-  let { email, otp } = req.body;
-
-  email = email.trim().toLowerCase();
-  otp = otp.trim();
-
-  if (!email || !otp) {
-    throw new AppError("Email and OTP required", 400);
-  }
-
-  const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
-
-  const pendingUser = await PendingUser.findOne({
-    email,
-    emailVerificationOTP: hashedOTP,
-    emailVerificationExpire: { $gt: Date.now() },
-  });
-
-  if (!pendingUser) {
-    throw new AppError("Invalid or expired OTP", 400);
-  }
-
-  // ✅ إنشاء المستخدم أولاً
-  const user = await User.create({
-    name: pendingUser.name,
-    username: pendingUser.username,
-    email: pendingUser.email,
-    phone: pendingUser.phone,
-    password: pendingUser.password,
-    isVerified: true,
-  });
-
-  // ✅ حذف pending بعد الإنشاء
-  await PendingUser.deleteOne({ _id: pendingUser._id });
-
-  // ✅ الرد
-  return successResponse(res, "Email verified successfully", {
-    user: {
-      id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      isVerified: user.isVerified,
-    },
-  });
 });
 
 // log out
