@@ -26,18 +26,24 @@ const pendingUserSchema = new mongoose.Schema(
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-// create OTP
+// OTP
 pendingUserSchema.methods.createEmailVerificationOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
   this.emailVerificationOTP = crypto
     .createHash("sha256")
     .update(otp)
     .digest("hex");
-  const emailOtpExpire = Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 60;
-  this.emailVerificationExpire = Date.now() + emailOtpExpire * 60 * 1000;
+
+  const expireMinutes =
+    Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 20;
+
+  this.emailVerificationExpire =
+    Date.now() + expireMinutes * 60 * 1000;
+
   return otp;
 };
 

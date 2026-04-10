@@ -277,7 +277,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
 //  [6] verify Email after register :
 exports.verifyEmail = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
+  let { email, otp } = req.body;
   email = email.trim().toLowerCase();
 otp = otp.trim();
   // 1️⃣ تحقق من البيانات
