@@ -102,7 +102,7 @@ exports.register = asyncHandler(async (req, res) => {
   });
 
   // Generate email OTP
-  const otp = pendingUser.createEmailVerificationRegOTP();
+  const otp = pendingUser.createEmailVerificationOTP();
   await pendingUser.save();
   // Send verification email
   try {
