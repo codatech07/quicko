@@ -279,7 +279,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 exports.verifyEmail = asyncHandler(async (req, res) => {
   let { email, otp } = req.body;
   email = email.trim().toLowerCase();
-otp = otp.trim();
+  otp = otp.trim();
   // 1️⃣ تحقق من البيانات
   if (!email || !otp) {
     throw new AppError("Email and OTP required", 400);
@@ -293,7 +293,7 @@ otp = otp.trim();
     emailVerificationExpire: { $gt: Date.now() },
   });
   // 4️⃣ إذا الكود غلط أو منتهي
-  if (!pendingUser) {
+  if (!user) {
     throw new AppError("Invalid or expired OTP", 400);
   }
   // 5️⃣ تفعيل الحساب
