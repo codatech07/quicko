@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 const AppError = require("../utils/AppError");
+const PendingUser = require("../models/pendingUserModel");
 const {
   successResponse,
   errorResponse,
@@ -83,20 +84,30 @@ exports.register = asyncHandler(async (req, res) => {
   }
   // password encryption
   const hashedPassword = await bcrypt.hash(password, 12);
-  const user = new User({
+  // 1
+  // const user = new User({
+  //   name,
+  //   username,
+  //   email,
+  //   phone,
+  //   password: hashedPassword,
+  // });
+  // 1
+  const pendingUser = new PendingUser({
     name,
     username,
     email,
     phone,
     password: hashedPassword,
   });
+
   // Generate email OTP
-  const otp = user.createEmailVerificationOTP();
-  await user.save();
+  const otp = pendingUser.createEmailVerificationRegOTP();
+  await pendingUser.save();
   // Send verification email
   try {
     await sendEmail({
-      email: user.email,
+      email: pendingUser.email,
       subject: "Verify your email",
       message: `Your verification code is: ${otp}`,
     });
@@ -274,24 +285,31 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   // // 2️⃣ تشفير OTP للمقارنة
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
   // 3️⃣ البحث عن المستخدم
-  const user = await User.findOne({
+  const pendingUser = await PendingUser.findOne({
     email: email.toLowerCase(),
     emailVerificationOTP: hashedOTP,
     emailVerificationExpire: { $gt: Date.now() },
   });
   // 4️⃣ إذا الكود غلط أو منتهي
-  if (!user) {
+  if (!pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
   // 5️⃣ تفعيل الحساب
-  user.isVerified = true;
-  user.emailVerificationOTP = undefined;
-  user.emailVerificationExpire = undefined;
-  const token = createToken(user._id);
-  await user.save();
+  pendingUser.isVerified = true;
+  pendingUser.emailVerificationOTP = undefined;
+  pendingUser.emailVerificationExpire = undefined;
+  // await user.save();
+  const user = await User.create({
+    name: pendingUser.name,
+    username: pendingUser.username,
+    email: pendingUser.email,
+    phone: pendingUser.phone,
+    password: pendingUser.password,
+    isVerified: pendingUser.isVerified,
+  });
+  await PendingUser.deleteOne({ _id: pendingUser._id });
   // 6️⃣ الرد
   return successResponse(res, "Email verified successfully", {
-    token,
     user: {
       id: user._id,
       name: user.name,
