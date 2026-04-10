@@ -1,32 +1,53 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-
 const pendingUserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     username: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
       lowercase: true,
+      minlength: 3,
     },
     email: {
       type: String,
       required: true,
+      unique: true,
       lowercase: true,
     },
     phone: {
       type: String,
       required: true,
+      unique: true,
     },
     password: {
       type: String,
       required: true,
+      minlength: 6,
+      select: false,
+    },
+    resetPasswordOTP: String,
+    resetPasswordExpire: Date,
+    otpAttempts: {
+      type: Number,
+      default: 0,
+    },
+    otpLastAttempt: Date,
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // OTP
@@ -38,12 +59,10 @@ pendingUserSchema.methods.createEmailVerificationOTP = function () {
     .update(otp)
     .digest("hex");
 
-  const expireMinutes =
-    Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 20;
+  const expireMinutes = Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 20;
 
-  this.emailVerificationExpire =
-    Date.now() + expireMinutes * 60 * 1000;
-    console.log("register otp created from pending shema");
+  this.emailVerificationExpire = Date.now() + expireMinutes * 60 * 1000;
+  console.log("register otp created from pending shema");
 
   return otp;
 };
