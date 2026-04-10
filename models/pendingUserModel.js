@@ -43,6 +43,7 @@ pendingUserSchema.methods.createEmailVerificationOTP = function () {
 
   this.emailVerificationExpire =
     Date.now() + expireMinutes * 60 * 1000;
+    console.log("register otp created from pending shema");
 
   return otp;
 };

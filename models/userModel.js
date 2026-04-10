@@ -66,6 +66,7 @@ userSchema.methods.createEmailVerificationOTP = function () {
     .digest("hex");
   const emailOtpExpire = Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 60;
   this.emailVerificationExpire = Date.now() + emailOtpExpire * 60 * 1000;
+  console.log("register otp created from user shema");
   return otp;
 };
 module.exports = mongoose.model("User", userSchema);
