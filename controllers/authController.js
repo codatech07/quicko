@@ -44,55 +44,55 @@ exports.register = asyncHandler(async (req, res) => {
   }
   // Username validation
   if (!usernameRegex.test(username)) {
-  throw new AppError(
-    "Username must be 5-20 chars, letters/numbers, can include _ or .",
-    400
-  );
-}
-// Email validation
+    throw new AppError(
+      "Username must be 5-20 chars, letters/numbers, can include _ or .",
+      400,
+    );
+  }
+  // Email validation
   if (!emailRegex.test(email)) {
-  throw new AppError("Invalid email format", 400);
-}
-// phone
+    throw new AppError("Invalid email format", 400);
+  }
+  // phone
   if (!phoneRegex.test(phone)) {
-  throw new AppError("Invalid phone number format", 400);
-}
-// password (Medium strength) Password strength validation
+    throw new AppError("Invalid phone number format", 400);
+  }
+  // password (Medium strength) Password strength validation
   if (!passwordRegex.test(password)) {
-  throw new AppError(
-    "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
-    400
-  );
-}
-// Check password match
+    throw new AppError(
+      "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
+      400,
+    );
+  }
+  // Check password match
   if (password !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
   }
-// B. match the password and username and email and phone From user and pending user
+  // B. match the password and username and email and phone From user and pending user
   // Check username match from user and pending user
   const [userUsername, pendingUsername] = await Promise.all([
-  User.findOne({ username }),
-  PendingUser.findOne({ username }),
-]);
-if (userUsername || pendingUsername) {
-  throw new AppError("Username already in use", 400);
-}
+    User.findOne({ username }),
+    PendingUser.findOne({ username }),
+  ]);
+  if (userUsername || pendingUsername) {
+    throw new AppError("Username already in use", 400);
+  }
   // Check email match from user and pending user
   const [userEmail, pendingEmail] = await Promise.all([
-  User.findOne({ email }),
-  PendingUser.findOne({ email }),
-]);
-if (userEmail || pendingEmail) {
-  throw new AppError("The email address is already in use", 400);
-}
+    User.findOne({ email }),
+    PendingUser.findOne({ email }),
+  ]);
+  if (userEmail || pendingEmail) {
+    throw new AppError("The email address is already in use", 400);
+  }
   // Check phone match from user and pending user
   const [userPhone, pendingPhone] = await Promise.all([
-  User.findOne({ phone }),
-  PendingUser.findOne({ phone }),
-]);
-if (userPhone || pendingPhone) {
-  throw new AppError("Phone number already in use", 400);
-}
+    User.findOne({ phone }),
+    PendingUser.findOne({ phone }),
+  ]);
+  if (userPhone['phone'].substring(userPhone['phone'].length - 8 ) || pendingPhone['phone'].substring(pendingPhone['phone'].length - 8 )) {
+    throw new AppError("Phone number already in use", 400);
+  }
   // C. password hashed and create pending user in db
   // password encryption
   const hashedPassword = await bcrypt.hash(password, 12);
@@ -119,7 +119,7 @@ if (userPhone || pendingPhone) {
     console.log("Email failed but user created");
   }
   // E. Respone
-    return successCreateResponse(
+  return successCreateResponse(
     res,
     `User registered. Please verify your email`,
   );
@@ -128,11 +128,11 @@ if (userPhone || pendingPhone) {
 //  [2] verify Email after register
 exports.verifyEmail = asyncHandler(async (req, res) => {
   let { email, otp } = req.body;
-   // A. Data cleaning
-   email = email.trim().toLowerCase();
-   otp = otp.trim();
-   // B . email and otp required
-   if (!email || !otp) {
+  // A. Data cleaning
+  email = email.trim().toLowerCase();
+  otp = otp.trim();
+  // B . email and otp required
+  if (!email || !otp) {
     throw new AppError("Email and OTP required", 400);
   }
   // B. hashed password and find the user
@@ -158,18 +158,15 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   // E. delete pending user from db pending user
   await PendingUser.deleteOne({ _id: pendingUser._id });
   // F. Response
-  return successResponse(res, "Email verified successfully", {
-    user: {
-      id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      isVerified: user.isVerified,
-    },
-  });
+  return successResponse(res, "Email verified successfully");
 });
+
+
+
+
+
+
+
 
 //  [3] LOGIN USER
 exports.login = asyncHandler(async (req, res) => {
@@ -228,6 +225,7 @@ exports.login = asyncHandler(async (req, res) => {
     },
   });
 });
+
 
 //  [4] FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
