@@ -163,12 +163,21 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   });
   // E. delete pending user from db pending user
   await PendingUser.deleteOne({ _id: pendingUser._id });
+  const token = createToken(user._id);
   // F. Response
-  return successResponse(res, "Email verified successfully");
+return successResponse(res, "Email verified successfully", {
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isVerified: user.isVerified,
+    },
+  });
 });
-
-
-
 
 //  [3] LOGIN USER 
 exports.login = asyncHandler(async (req, res) => {
@@ -180,7 +189,7 @@ exports.login = asyncHandler(async (req, res) => {
   if (!identifier || !password) {
     throw new AppError("Please enter your email or username and password", 400);
   }
-  // Specify whether it is email or username
+  // C. Specify whether it is email or username
   const isEmail = identifier.includes("@");
   const query = isEmail
     ? { email: identifier.toLowerCase() }
@@ -199,7 +208,7 @@ exports.login = asyncHandler(async (req, res) => {
   if (pendingUser) {
     const isMatch = await bcrypt.compare(password, pendingUser.password);
     if (!isMatch) {
-      throw new AppError("Incorrect password", 400);
+      throw new AppError("Incorrect password", 401);
     }
       const otp = pendingUser.createEmailVerificationOTP();
       await pendingUser.save({ isVerified: false });
@@ -214,10 +223,9 @@ exports.login = asyncHandler(async (req, res) => {
   }
   return errorResponse(
     res,
-    "Your email is not verification Check your email  for Verify your email"
+    "Your email is not verification Check your email for Verify your email"
   );
 }
-
 // E. if user in user db
 //    1.check the password 
 const isMatch = await bcrypt.compare(password, user.password);
@@ -238,99 +246,67 @@ return successResponse(res, "Login successful", {
     isVerified: user.isVerified,
   },
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  
-  
-  
-  // Password verification a
-  // const isMatch = await bcrypt.compare(password, user.password);
-  // if (!isMatch) {
-  //   throw new AppError("Incorrect password", 400);
-  // }
-  // is email validate
-  // if (!user.isVerified) {
-  //   //  create new otp
-  //   const otp = user.createEmailVerificationOTP();
-  //   await user.save({ validateBeforeSave: false });
-  //   // send email
-  //   try {
-  //     await sendEmail({
-  //       email: user.email,
-  //       subject: "Verify your email",
-  //       message: `Your verification code is: ${otp}`,
-  //     });
-  //   } catch (error) {
-  //     console.log("Email failed log in");
-  //   }
-  //   return errorResponse(
-  //     res,
-  //     `Account not verified. A new OTP has been sent to your email`,
-  //   );
-  // }
-  // const token = createToken(user._id);
-  // return successResponse(res, "Login successfull", {
-  //   token,
-  //   user: {
-  //     id: user._id,
-  //     name: user.name,
-  //     username: user.username,
-  //     email: user.email,
-  //     phone: user.phone,
-  //     role: user.role,
-  //     isVerified: user.isVerified,
-  //   },
-  // });
-
-
-
-
 });
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+//  [4]and[5]and[6] for reset password 
 //  [4] FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  let { email } = req.body;
+  email = email.trim().toLowerCase();
+  // A. email is required
   if (!email) {
     throw new AppError("Email is required", 400);
   }
-  const user = await User.findOne({ email });
-  if (!user) {
+  // B. serch for email from user and pending user
+  const [user, pendingUser] = await Promise.all([
+    User.findOne({ email: normalizedEmail }),
+    PendingUser.findOne({ email: normalizedEmail }),
+  ]);
+  if (!user && !pendingUser) {
     throw new AppError("User not found", 404);
   }
-  const now = Date.now();
-  // // Reset OTP limit every 24h
+  //  C. email in pending user 
+  if (pendingUser){
+    const now = Date.now();
+    // Reset OTP limit every 24h
+  if (pendingUser.otpLastAttempt && now - pendingUser.otpLastAttempt > 24 * 60 * 60 * 1000) {
+    pendingUser.otpAttempts = 0;
+  }
+  // If the limit is reached
+  if (pendingUser.otpAttempts >= 5) {
+    throw new AppError("You reached max OTP requests today", 429);
+  }
+  // Attempts 4 and 5 require waiting.
+  if (pendingUser.otpAttempts >= 3) {
+    if (pendingUser.otpLastAttempt && now - pendingUser.otpLastAttempt < 30 * 60 * 1000) {
+      throw new AppError("Wait 30 minutes before requesting again", 429);
+    }
+  }
+    // create reset password otp
+  const otp = pendingUser.createPasswordResetOTP();
+  // Update attempts for OTP
+  pendingUser.otpAttempts += 1;
+  pendingUser.otpLastAttempt = now;
+  await pendingUser.save({ validateBeforeSave: false });
+  const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
+  try {
+    await sendEmail({
+      email: pendingUser.email,
+      subject: "Verify your email",
+      message: `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`,
+    });
+  } catch (err) {
+    console.log("send email failed");
+  }
+  return successResponse(res, `OTP sent to email`);
+  };
+
+  // D. email in user 
+  if (user){
+    const now = Date.now();
+    // Reset OTP limit every 24h
   if (user.otpLastAttempt && now - user.otpLastAttempt > 24 * 60 * 60 * 1000) {
     user.otpAttempts = 0;
   }
@@ -344,68 +320,119 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       throw new AppError("Wait 30 minutes before requesting again", 429);
     }
   }
-  // create OTP
+    // create reset password otp
   const otp = user.createPasswordResetOTP();
   // Update attempts for OTP
   user.otpAttempts += 1;
   user.otpLastAttempt = now;
   await user.save({ validateBeforeSave: false });
   const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
-  const message = `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`;
-
   try {
     await sendEmail({
       email: user.email,
-      subject: "Password Reset Code",
-      message,
+      subject: "Verify your email",
+      message: `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`,
     });
-  } catch (error) {
-    console.log("Email failed but forget password");
+  } catch (err) {
+    console.log("send email failed");
   }
   return successResponse(res, `OTP sent to email`);
+  };
 });
+
+
 
 //  [5] VERIFY EMAIL OTP for password
 exports.verifyOTP = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
     throw new AppError("Email and OTP are required", 400);
   }
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
-  const user = await User.findOne({
-    email,
-    resetPasswordOTP: hashedOTP,
-    resetPasswordExpire: { $gt: Date.now() },
-  });
-  if (!user) {
+   const [user, pendingUser] = await Promise.all([
+    User.findOne({
+      email,
+      resetPasswordOTP: hashedOTP,
+      resetPasswordExpire: { $gt: Date.now() },
+    }),
+    PendingUser.findOne({
+      email,
+      resetPasswordOTP: hashedOTP,
+      resetPasswordExpire: { $gt: Date.now() },
+    }),
+  ]);
+  if (!user || !pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
   await user.save();
-
+  await pendingUser.save();
   return successResponse(res, "OTP verified successfully");
-});
+  });
+
+
+
+
+
+
+
 
 //  [6] reset password
+
+
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
   if (!email || !otp || !password || !confirmPassword) {
     throw new AppError("All fields are required", 400);
   }
-  if (password.includes(" ")) {
-    throw new AppError("Password cannot contain spaces", 400);
-  }
-  if (password.length < 6) {
-    throw new AppError("Password too short", 400);
+
+  if (!passwordRegex.test(password)) {
+    throw new AppError(
+      "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
+      400,
+    );
   }
   if (password !== confirmPassword) {
     throw new AppError("Passwords do not match", 400);
   }
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
-  const user = await User.findOne({
-    email,
-    resetPasswordOTP: hashedOTP,
-    resetPasswordExpire: { $gt: Date.now() },
-  });
+  const [user, pendingUser] = await Promise.all([
+    User.findOne({
+      email,
+      resetPasswordOTP: hashedOTP,
+      resetPasswordExpire: { $gt: Date.now() },
+    }),
+    PendingUser.findOne({
+      email,
+      resetPasswordOTP: hashedOTP,
+      resetPasswordExpire: { $gt: Date.now() },
+    }),
+  ]);
+
+
+
+
+
+
+
+  // if (password.includes(" ")) {
+  //   throw new AppError("Password cannot contain spaces", 400);
+  // }
+  // if (password.length < 6) {
+  //   throw new AppError("Password too short", 400);
+  // }
+
+
+
+
+  // if (password !== confirmPassword) {
+  //   throw new AppError("Passwords do not match", 400);
+  // }
+  // const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+  // const user = await User.findOne({
+  //   email,
+  //   resetPasswordOTP: hashedOTP,
+  //   resetPasswordExpire: { $gt: Date.now() },
+  // });
   if (!user) {
     throw new AppError("OTP invalid or expired", 400);
   }
@@ -416,10 +443,19 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   return successResponse(res, "Password reset successful");
 });
 
+
+
+
+
 // log out
 exports.logout = asyncHandler(async (req, res) => {
   return successResponse(res, "Logged out successfully");
 });
+
+
+
+
+
 
 // CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {

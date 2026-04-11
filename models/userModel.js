@@ -48,11 +48,12 @@ const userSchema = new mongoose.Schema(
     },
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
+    
   },
   { timestamps: true },
 );
 
-// password update
+// password update OTP
 userSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   this.resetPasswordOTP = crypto.createHash("sha256").update(otp).digest("hex");
@@ -60,6 +61,7 @@ userSchema.methods.createPasswordResetOTP = function () {
   this.resetPasswordExpire = Date.now() + otpExpire * 60 * 1000;
   return otp;
 };
+// eamil update OTP
 userSchema.methods.createEmailVerificationOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   this.emailVerificationOTP = crypto
