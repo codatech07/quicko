@@ -369,22 +369,12 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   return successResponse(res, "OTP verified successfully");
   });
 
-
-
-
-
-
-
-
 //  [6] reset password
-
-
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
   if (!email || !otp || !password || !confirmPassword) {
     throw new AppError("All fields are required", 400);
   }
-
   if (!passwordRegex.test(password)) {
     throw new AppError(
       "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
@@ -407,12 +397,15 @@ exports.resetPassword = asyncHandler(async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     }),
   ]);
-
-
-
-
-
-
+  const targetUser = user || pendingUser;
+  if (!targetUser) {
+    throw new AppError("OTP invalid or expired", 400);
+  }
+  targetUser.password = await bcrypt.hash(password, 12);
+  targetUser.resetPasswordOTP = undefined;
+  targetUser.resetPasswordExpire = undefined;
+  await targetUser.save();
+  return successResponse(res, "Password reset successful");
 
   // if (password.includes(" ")) {
   //   throw new AppError("Password cannot contain spaces", 400);
@@ -420,10 +413,6 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   // if (password.length < 6) {
   //   throw new AppError("Password too short", 400);
   // }
-
-
-
-
   // if (password !== confirmPassword) {
   //   throw new AppError("Passwords do not match", 400);
   // }
@@ -433,24 +422,21 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   //   resetPasswordOTP: hashedOTP,
   //   resetPasswordExpire: { $gt: Date.now() },
   // });
-  if (!user) {
-    throw new AppError("OTP invalid or expired", 400);
-  }
-  user.password = await bcrypt.hash(password, 12);
-  user.resetPasswordOTP = undefined;
-  user.resetPasswordExpire = undefined;
-  await user.save();
-  return successResponse(res, "Password reset successful");
+  // if (!user) {
+  //   throw new AppError("OTP invalid or expired", 400);
+  // }
+  // user.password = await bcrypt.hash(password, 12);
+  // user.resetPasswordOTP = undefined;
+  // user.resetPasswordExpire = undefined;
+  // await user.save();
+  // return successResponse(res, "Password reset successful");
 });
 
 
 
 
 
-// log out
-exports.logout = asyncHandler(async (req, res) => {
-  return successResponse(res, "Logged out successfully");
-});
+
 
 
 
@@ -511,4 +497,9 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
     }
     return successResponseForAvailability(res, "Phone available");
   }
+});
+
+// [7] log out
+exports.logout = asyncHandler(async (req, res) => {
+  return successResponse(res, "Logged out successfully");
 });
