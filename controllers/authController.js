@@ -366,11 +366,11 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     }),
   ]);
-  if (!user || !pendingUser) {
+  if (!user && !pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
-  await user.save();
-  await pendingUser.save();
+    const targetUser = user || pendingUser;
+ await targetUser.save({ validateBeforeSave: false });
   return successResponse(res, "OTP verified successfully");
 });
 
