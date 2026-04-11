@@ -70,11 +70,10 @@ exports.register = asyncHandler(async (req, res) => {
     throw new AppError("The passwords do not match", 400);
   }
   // B.normalize phone in data
-const normalizedPhone = normalizePhone(phone);
-
-if (!normalizedPhone) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) {
   throw new AppError("Invalid phone number format", 400);
-}
+  }
   // B. match the password and username and email and phone From user and pending user
   // Check username match from user and pending user
   const [userUsername, pendingUsername] = await Promise.all([
@@ -168,12 +167,16 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   return successResponse(res, "Email verified successfully");
 });
 
-//  [3] LOGIN USER
+
+
+
+//  [3] LOGIN USER 
 exports.login = asyncHandler(async (req, res) => {
   let { identifier, password } = req.body;
-  // Data cleaning
+  // A. Data cleaning
   identifier = identifier.trim();
   password = password.trim();
+  // B. email or user name required
   if (!identifier || !password) {
     throw new AppError("Please enter your email or username and password", 400);
   }
@@ -182,49 +185,140 @@ exports.login = asyncHandler(async (req, res) => {
   const query = isEmail
     ? { email: identifier.toLowerCase() }
     : { username: identifier.toLowerCase() };
-  const user = await User.findOne(query).select("+password");
-  if (!user) {
+    // C. 1. search in all user and pending user
+    const [user, pendingUser] = await Promise.all([
+    User.findOne(query).select("+password"),
+    PendingUser.findOne(query),
+  ]);
+  //      2. if not found anywhere
+  if (!user && !pendingUser) {
     throw new AppError("User not found", 404);
   }
-  // Password verification
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new AppError("Incorrect password", 400);
-  }
-  // is email validate
-  if (!user.isVerified) {
-    //  create new otp
-    const otp = user.createEmailVerificationOTP();
-    await user.save({ validateBeforeSave: false });
-    // send email
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: "Verify your email",
-        message: `Your verification code is: ${otp}`,
-      });
-    } catch (error) {
-      console.log("Email failed log in");
+  // D. if user in pending user db 
+  //    1.check the password and create otp
+  if (pendingUser) {
+    const isMatch = await bcrypt.compare(password, pendingUser.password);
+    if (!isMatch) {
+      throw new AppError("Incorrect password", 400);
     }
-    return errorResponse(
-      res,
-      `Account not verified. A new OTP has been sent to your email`,
-    );
+      const otp = pendingUser.createEmailVerificationOTP();
+      await pendingUser.save({ isVerified: false });
+      try {
+    await sendEmail({
+      email: pendingUser.email,
+      subject: "Verify your email",
+      message: `Your verification code is: ${otp}`,
+    });
+  } catch (err) {
+    console.log("send email failed but paassword ok");
   }
-  const token = createToken(user._id);
-  return successResponse(res, "Login successfull", {
-    token,
-    user: {
-      id: user._id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      isVerified: user.isVerified,
-    },
-  });
+  return errorResponse(
+    res,
+    "Check your email for verification code"
+  );
+}
+
+
+// E. if user in user db
+//    1.check the password 
+const isMatch = await bcrypt.compare(password, user.password);
+if (!isMatch) {
+  throw new AppError("Incorrect password", 400);
+}
+//    1.create token and log in
+const token = createToken(user._id);
+return successResponse(res, "Login successful", {
+  token,
+  user: {
+    id: user._id,
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    isVerified: user.isVerified,
+  },
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  // Password verification
+  // const isMatch = await bcrypt.compare(password, user.password);
+  // if (!isMatch) {
+  //   throw new AppError("Incorrect password", 400);
+  // }
+  // is email validate
+  // if (!user.isVerified) {
+  //   //  create new otp
+  //   const otp = user.createEmailVerificationOTP();
+  //   await user.save({ validateBeforeSave: false });
+  //   // send email
+  //   try {
+  //     await sendEmail({
+  //       email: user.email,
+  //       subject: "Verify your email",
+  //       message: `Your verification code is: ${otp}`,
+  //     });
+  //   } catch (error) {
+  //     console.log("Email failed log in");
+  //   }
+  //   return errorResponse(
+  //     res,
+  //     `Account not verified. A new OTP has been sent to your email`,
+  //   );
+  // }
+  // const token = createToken(user._id);
+  // return successResponse(res, "Login successfull", {
+  //   token,
+  //   user: {
+  //     id: user._id,
+  //     name: user.name,
+  //     username: user.username,
+  //     email: user.email,
+  //     phone: user.phone,
+  //     role: user.role,
+  //     isVerified: user.isVerified,
+  //   },
+  // });
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //  [4] FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
