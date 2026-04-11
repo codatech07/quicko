@@ -430,17 +430,13 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
     }
     return successResponseForAvailability(res, "Email available");
   }
-
-
-
-  
   // PHONE
   if (phone) {
-    const cleanedphone = phone.trim();
-    if (!phoneRegex.test(cleanedphone)) {
+    const cleanedPhone = phone.trim().replace(/^ /, "+");
+    if (!phoneRegex.test(cleanedPhone)) {
       return errorResponseForHandred(res, "Invalid phone number format");
     }
-    const normalizedPhone = normalizePhone(cleanedphone);
+    const normalizedPhone = normalizePhone(cleanedPhone);
     if (!normalizedPhone) {
       return errorResponseForHandred(res, "Invalid phone number");
     }
