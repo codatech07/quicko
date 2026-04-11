@@ -266,85 +266,42 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     throw new AppError("User not found", 404);
   }
   //  C. email in pending user
-  if (pendingUser) {
-    const now = Date.now();
-    // Reset OTP limit every 24h
-    if (
-      pendingUser.otpLastAttempt &&
-      now - pendingUser.otpLastAttempt > 24 * 60 * 60 * 1000
-    ) {
-      pendingUser.otpAttempts = 0;
-    }
-    // If the limit is reached
-    if (pendingUser.otpAttempts >= 5) {
-      throw new AppError("You reached max OTP requests today", 429);
-    }
-    // Attempts 4 and 5 require waiting.
-    if (pendingUser.otpAttempts >= 3) {
-      if (
-        pendingUser.otpLastAttempt &&
-        now - pendingUser.otpLastAttempt < 30 * 60 * 1000
-      ) {
-        throw new AppError("Wait 30 minutes before requesting again", 429);
-      }
-    }
-    // create reset password otp
-    const otp = pendingUser.createPasswordResetOTP();
-    // Update attempts for OTP
-    pendingUser.otpAttempts += 1;
-    pendingUser.otpLastAttempt = now;
-    await pendingUser.save({ validateBeforeSave: false });
-    const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
-    try {
-      await sendEmail({
-        email: pendingUser.email,
-        subject: "Verify your email",
-        message: `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`,
-      });
-    } catch (err) {
-      console.log("send email failed");
-    }
-    return successResponse(res, `OTP sent to email`);
+  const targetUser = user || pendingUser;
+  const now = Date.now();
+  if (
+    targetUser.otpLastAttempt &&
+    now - targetUser.otpLastAttempt > 24 * 60 * 60 * 1000
+  ) {
+    targetUser.otpAttempts = 0;
   }
 
-  // D. email in user
-  if (user) {
-    const now = Date.now();
-    // Reset OTP limit every 24h
-    if (
-      user.otpLastAttempt &&
-      now - user.otpLastAttempt > 24 * 60 * 60 * 1000
-    ) {
-      user.otpAttempts = 0;
-    }
-    // If the limit is reached
-    if (user.otpAttempts >= 5) {
-      throw new AppError("You reached max OTP requests today", 429);
-    }
-    // Attempts 4 and 5 require waiting.
-    if (user.otpAttempts >= 3) {
-      if (user.otpLastAttempt && now - user.otpLastAttempt < 30 * 60 * 1000) {
-        throw new AppError("Wait 30 minutes before requesting again", 429);
-      }
-    }
-    // create reset password otp
-    const otp = user.createPasswordResetOTP();
-    // Update attempts for OTP
-    user.otpAttempts += 1;
-    user.otpLastAttempt = now;
-    await user.save({ validateBeforeSave: false });
-    const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 10;
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: "Verify your email",
-        message: `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`,
-      });
-    } catch (err) {
-      console.log("send email failed");
-    }
-    return successResponse(res, `OTP sent to email`);
+  if (targetUser.otpAttempts >= 5) {
+    throw new AppError("You reached max OTP requests today", 429);
   }
+
+  if (targetUser.otpAttempts >= 3) {
+    if (
+      targetUser.otpLastAttempt &&
+      now - targetUser.otpLastAttempt < 30 * 60 * 1000
+    ) {
+      throw new AppError("Wait 30 minutes before requesting again", 429);
+    }
+  }
+  const otp = targetUser.createPasswordResetOTP();
+  targetUser.otpAttempts += 1;
+  targetUser.otpLastAttempt = now;
+  await targetUser.save({ validateBeforeSave: false });
+  const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 20;
+  try {
+    await sendEmail({
+      email: targetUser.email,
+      subject: "Verify your email",
+      message: `Your password reset code is: ${otp}. This code will expire in ${otpExpire} minutes.`,
+    });
+  } catch (err) {
+    console.log("send email failed");
+  }
+  return successResponse(res, `OTP sent to email`);
 });
 
 //  [5] VERIFY EMAIL OTP for password
@@ -412,6 +369,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   await targetUser.save();
   return successResponse(res, "Password reset successful");
 });
+
 // [7] CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {
   const { username, email, phone } = req.query;
