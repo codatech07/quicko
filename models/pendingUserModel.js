@@ -7,21 +7,34 @@ const pendingUserSchema = new mongoose.Schema(
     username: {
       type: String,
       required: true,
+      unique: true,
       trim: true,
       lowercase: true,
+      minlength: 5,
+      maxlength: 20,
+      match:
+        /^(?=\S+$)(?=.{5,20}$)(?!.*[._]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$/,
     },
     email: {
       type: String,
       required: true,
       lowercase: true,
+      unique: true,
     },
     phone: {
       type: String,
       required: true,
+      unique: true,
     },
     password: {
       type: String,
       required: true,
+      minlength: 4,
+      select: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     emailVerificationOTP: String,
     emailVerificationExpire: Date,

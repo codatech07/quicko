@@ -15,6 +15,12 @@ const {
   errorResponseForAvailabilityNoData,
   errorResponseForHandred,
 } = require("../utils/response");
+const {
+  usernameRegex,
+  emailRegex,
+  phoneRegex,
+  passwordRegex,
+} = require("../utils/validators/authValidators");
 
 // Create a token
 const createToken = (id) => {
@@ -27,60 +33,67 @@ const createToken = (id) => {
 exports.register = asyncHandler(async (req, res) => {
   // Extract and normalize input
   let { name, username, email, phone, password, confirmPassword } = req.body;
-  // Data cleaning
+  // A. Data cleaning
   name = name.trim();
   username = username.trim().toLowerCase();
   email = email.trim().toLowerCase();
   phone = phone.trim();
-  // Prevent spaces in password (security rule)
-  if (password.includes(" ")) {
-    throw new AppError("The password cannot contain spaces", 400);
-  }
-  // // Ensure all fields exist
+  // Ensure all fields exist
   if (!name || !username || !email || !phone || !password || !confirmPassword) {
     throw new AppError("All fields are required", 400);
   }
-  // // Username validation
-  if (username.length < 3) {
-    throw new AppError("The username must be at least 3 characters long", 400);
-  }
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Username validation
+  if (!usernameRegex.test(username)) {
+  throw new AppError(
+    "Username must be 5-20 chars, letters/numbers, can include _ or .",
+    400
+  );
+}
+// Email validation
   if (!emailRegex.test(email)) {
-    throw new AppError("The email address is invalid", 400);
-  }
-  // phone
-  const phoneRegex = /^[0-9]{8,15}$/;
+  throw new AppError("Invalid email format", 400);
+}
+// phone
   if (!phoneRegex.test(phone)) {
-    throw new AppError("Invalid phone number", 400);
-  }
-  // password (Medium strength) Password strength validation
-  const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=\S+$).{6,}$/;
+  throw new AppError("Invalid phone number format", 400);
+}
+// password (Medium strength) Password strength validation
   if (!passwordRegex.test(password)) {
-    throw new AppError(
-      "The password must contain letters and numbers and no spaces",
-      400,
-    );
-  }
-  // Check password match
+  throw new AppError(
+    "Password must contain at least 1 uppercase letter and be 4+ characters",
+    400
+  );
+}
+// Check password match
   if (password !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
   }
-  // Check username match
-  const usernameExists = await User.findOne({ username });
-  if (usernameExists) {
-    throw new AppError("Username already in use", 400);
-  }
-  // Check email match
-  const emailExists = await User.findOne({ email });
-  if (emailExists) {
-    throw new AppError("The email address is already in use", 400);
-  }
-  // Check phone match
-  const phoneExists = await User.findOne({ phone });
-  if (phoneExists) {
-    throw new AppError("Phone number already in use", 400);
-  }
+// B. match the password and username and email and phone From user and pending user
+  // Check username match from user and pending user
+  const [userUsername, pendingUsername] = await Promise.all([
+  User.findOne({ username }),
+  PendingUser.findOne({ username }),
+]);
+if (userUsername || pendingUsername) {
+  throw new AppError("Username already in use", 400);
+}
+  // Check email match from user and pending user
+  const [userEmail, pendingEmail] = await Promise.all([
+  User.findOne({ email }),
+  PendingUser.findOne({ email }),
+]);
+if (userEmail || pendingEmail) {
+  throw new AppError("The email address is already in use", 400);
+}
+  // Check phone match from user and pending user
+  const [userPhone, pendingPhone] = await Promise.all([
+  User.findOne({ phone }),
+  PendingUser.findOne({ phone }),
+]);
+if (userPhone || pendingPhone) {
+  throw new AppError("Phone number already in use", 400);
+}
+  // C. password hashed and create pending user in db
   // password encryption
   const hashedPassword = await bcrypt.hash(password, 12);
   const pendingUser = new PendingUser({
@@ -89,11 +102,13 @@ exports.register = asyncHandler(async (req, res) => {
     email,
     phone,
     password: hashedPassword,
+    isVerified: false,
   });
-  // Generate email OTP
+  // D. * Generate email OTP {OTP form pending user}
+  //    * save pending user
   const otp = pendingUser.createEmailVerificationOTP();
   await pendingUser.save();
-  // Send verification email
+  // E. Send verification email
   try {
     await sendEmail({
       email: pendingUser.email,
@@ -103,30 +118,35 @@ exports.register = asyncHandler(async (req, res) => {
   } catch (err) {
     console.log("Email failed but user created");
   }
-  return successCreateResponse(
+  // E. Respone
+    return successCreateResponse(
     res,
     `User registered. Please verify your email`,
   );
 });
 
-//  [2] verify Email after register :
+//  [2] verify Email after register
 exports.verifyEmail = asyncHandler(async (req, res) => {
   let { email, otp } = req.body;
-  email = email.trim().toLowerCase();
-  otp = otp.trim();
-  if (!email || !otp) {
+   // A. Data cleaning
+   email = email.trim().toLowerCase();
+   otp = otp.trim();
+   // B . email and otp required
+   if (!email || !otp) {
     throw new AppError("Email and OTP required", 400);
   }
+  // B. hashed password and find the user
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
   const pendingUser = await PendingUser.findOne({
     email,
     emailVerificationOTP: hashedOTP,
     emailVerificationExpire: { $gt: Date.now() },
   });
+  // C. chek the email and otp :
   if (!pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
-  // create user in db user
+  // D. create user in db user and verified true
   const user = await User.create({
     name: pendingUser.name,
     username: pendingUser.username,
@@ -135,9 +155,9 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
     password: pendingUser.password,
     isVerified: true,
   });
-  // delete pending user from db pending user
+  // E. delete pending user from db pending user
   await PendingUser.deleteOne({ _id: pendingUser._id });
-  // Response
+  // F. Response
   return successResponse(res, "Email verified successfully", {
     user: {
       id: user._id,

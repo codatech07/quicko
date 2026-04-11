@@ -9,7 +9,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      minlength: 3,
+      minlength: 5,
+  maxlength: 20,
+  match: /^(?=\S+$)(?=.{5,20}$)(?!.*[._]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$/,
     },
     email: {
       type: String,
@@ -25,7 +27,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 4,
       select: false,
     },
     resetPasswordOTP: String,
