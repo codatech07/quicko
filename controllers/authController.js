@@ -223,7 +223,7 @@ exports.login = asyncHandler(async (req, res) => {
     }
     return errorResponse(
       res,
-      "Your email is not verification Check your email for Verify your email",
+      "Account not verified. Please check your email for verification code",
     );
   }
   // E. if user in user db
@@ -259,8 +259,8 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   }
   // B. serch for email from user and pending user
   const [user, pendingUser] = await Promise.all([
-    User.findOne({ email: normalizedEmail }),
-    PendingUser.findOne({ email: normalizedEmail }),
+    User.findOne({ email }),
+    PendingUser.findOne({ email }),
   ]);
   if (!user && !pendingUser) {
     throw new AppError("User not found", 404);
