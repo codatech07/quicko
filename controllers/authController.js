@@ -60,7 +60,7 @@ exports.register = asyncHandler(async (req, res) => {
 // password (Medium strength) Password strength validation
   if (!passwordRegex.test(password)) {
   throw new AppError(
-    "Password must contain at least 1 uppercase letter and be 4+ characters",
+    "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
     400
   );
 }

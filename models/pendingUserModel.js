@@ -30,7 +30,6 @@ const pendingUserSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 4,
-      select: false,
     },
     isVerified: {
       type: Boolean,
