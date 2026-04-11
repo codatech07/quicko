@@ -262,7 +262,7 @@ return successResponse(res, "Login successful", {
   
   
   
-  // Password verification
+  // Password verification a
   // const isMatch = await bcrypt.compare(password, user.password);
   // if (!isMatch) {
   //   throw new AppError("Incorrect password", 400);
