@@ -369,8 +369,8 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   if (!user && !pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
-    const targetUser = user || pendingUser;
- await targetUser.save({ validateBeforeSave: false });
+  const targetUser = user || pendingUser;
+  await targetUser.save({ validateBeforeSave: false });
   return successResponse(res, "OTP verified successfully");
 });
 
@@ -411,30 +411,6 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   targetUser.resetPasswordExpire = undefined;
   await targetUser.save();
   return successResponse(res, "Password reset successful");
-
-  // if (password.includes(" ")) {
-  //   throw new AppError("Password cannot contain spaces", 400);
-  // }
-  // if (password.length < 6) {
-  //   throw new AppError("Password too short", 400);
-  // }
-  // if (password !== confirmPassword) {
-  //   throw new AppError("Passwords do not match", 400);
-  // }
-  // const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
-  // const user = await User.findOne({
-  //   email,
-  //   resetPasswordOTP: hashedOTP,
-  //   resetPasswordExpire: { $gt: Date.now() },
-  // });
-  // if (!user) {
-  //   throw new AppError("OTP invalid or expired", 400);
-  // }
-  // user.password = await bcrypt.hash(password, 12);
-  // user.resetPasswordOTP = undefined;
-  // user.resetPasswordExpire = undefined;
-  // await user.save();
-  // return successResponse(res, "Password reset successful");
 });
 // [7] CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {
