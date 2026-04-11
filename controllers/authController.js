@@ -20,6 +20,7 @@ const {
   emailRegex,
   phoneRegex,
   passwordRegex,
+  normalizePhone,
 } = require("../utils/validators/authValidators");
 
 // Create a token
@@ -68,6 +69,12 @@ exports.register = asyncHandler(async (req, res) => {
   if (password !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
   }
+  // B.normalize phone in data
+const normalizedPhone = normalizePhone(phone);
+
+if (!normalizedPhone) {
+  throw new AppError("Invalid phone number format", 400);
+}
   // B. match the password and username and email and phone From user and pending user
   // Check username match from user and pending user
   const [userUsername, pendingUsername] = await Promise.all([
@@ -87,10 +94,10 @@ exports.register = asyncHandler(async (req, res) => {
   }
   // Check phone match from user and pending user
   const [userPhone, pendingPhone] = await Promise.all([
-    User.findOne({ phone }),
-    PendingUser.findOne({ phone }),
-  ]);
-  if (userPhone['phone'].substring(userPhone['phone'].length - 8 ) || pendingPhone['phone'].substring(pendingPhone['phone'].length - 8 )) {
+  User.findOne({ phone: normalizedPhone }),
+  PendingUser.findOne({ phone: normalizedPhone }),
+]);
+  if (userPhone || pendingPhone) {
     throw new AppError("Phone number already in use", 400);
   }
   // C. password hashed and create pending user in db
@@ -100,7 +107,7 @@ exports.register = asyncHandler(async (req, res) => {
     name,
     username,
     email,
-    phone,
+    phone: normalizedPhone,
     password: hashedPassword,
     isVerified: false,
   });
@@ -161,13 +168,6 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   return successResponse(res, "Email verified successfully");
 });
 
-
-
-
-
-
-
-
 //  [3] LOGIN USER
 exports.login = asyncHandler(async (req, res) => {
   let { identifier, password } = req.body;
@@ -225,7 +225,6 @@ exports.login = asyncHandler(async (req, res) => {
     },
   });
 });
-
 
 //  [4] FORGOT PASSWORD
 exports.forgotPassword = asyncHandler(async (req, res) => {
