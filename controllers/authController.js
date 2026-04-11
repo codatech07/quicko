@@ -432,7 +432,12 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
   }
   // PHONE
   if (phone) {
-    let cleanedPhone = phone.trim().replace(/^ /, "+");
+    let cleanedPhone = phone.trim();
+    // fix + issue from query
+  if (!cleanedPhone.startsWith("+") && cleanedPhone.startsWith("963")) {
+    cleanedPhone = "+" + cleanedPhone;
+  }
+  
     if (!phoneRegex.test(cleanedPhone)) {
       return errorResponseForHandred(res, "Invalid phone number format");
     }
