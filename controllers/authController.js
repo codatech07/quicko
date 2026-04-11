@@ -265,7 +265,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   if (!user && !pendingUser) {
     throw new AppError("User not found", 404);
   }
-  //  C. email in pending user
+  //  C. create a new const to look for user and pending user otp
   const targetUser = user || pendingUser;
   const now = Date.now();
   if (
@@ -287,11 +287,15 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       throw new AppError("Wait 30 minutes before requesting again", 429);
     }
   }
+  // create otp
   const otp = targetUser.createPasswordResetOTP();
+  // otp attemps +1
   targetUser.otpAttempts += 1;
   targetUser.otpLastAttempt = now;
+  //save
   await targetUser.save({ validateBeforeSave: false });
   const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 20;
+  // D. send email
   try {
     await sendEmail({
       email: targetUser.email,
@@ -307,10 +311,13 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 //  [5] VERIFY EMAIL OTP for password
 exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
+  // A. email and otp requierd
   if (!email || !otp) {
     throw new AppError("Email and OTP are required", 400);
   }
+  // B. hashed otp
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
+  // C. find email and reset otp hashed and expire in user and pendinguser
   const [user, pendingUser] = await Promise.all([
     User.findOne({
       email,
@@ -323,9 +330,11 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     }),
   ]);
+  // D. if not in user and pending user
   if (!user && !pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
+  // D. save the hashed and otp
   const targetUser = user || pendingUser;
   await targetUser.save({ validateBeforeSave: false });
   return successResponse(res, "OTP verified successfully");
@@ -334,18 +343,22 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
 //  [6] reset password
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
+  // A. all body required
   if (!email || !otp || !password || !confirmPassword) {
     throw new AppError("All fields are required", 400);
   }
+  // B. chek the password
   if (!passwordRegex.test(password)) {
     throw new AppError(
       "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
       400,
     );
   }
+  // C. chek the confirm password
   if (password !== confirmPassword) {
     throw new AppError("Passwords do not match", 400);
   }
+  // D. look the hashed otp pass in the user and pending user
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
   const [user, pendingUser] = await Promise.all([
     User.findOne({
@@ -359,20 +372,29 @@ exports.resetPassword = asyncHandler(async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     }),
   ]);
+  // E. target to look for the user and pending user hashed
   const targetUser = user || pendingUser;
   if (!targetUser) {
     throw new AppError("OTP invalid or expired", 400);
   }
+  // E. hashed new password
   targetUser.password = await bcrypt.hash(password, 12);
+  // F. clean the otp hashed for can't used more time
   targetUser.resetPasswordOTP = undefined;
   targetUser.resetPasswordExpire = undefined;
+  // G. save new data
   await targetUser.save();
   return successResponse(res, "Password reset successful");
 });
 
 // [7] CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {
-  const { username, email, phone } = req.query;
+  let { username, email, phone } = req.query;
+  // A. clean the data
+  username = username.trim().toLowerCase();
+  email = email.trim().toLowerCase();
+  phone = phone.trim();
+  // B. dall data requierd
   if (!username && !email && !phone) {
     return errorResponseForAvailabilityNoData(
       res,
