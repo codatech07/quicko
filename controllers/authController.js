@@ -287,15 +287,15 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       throw new AppError("Wait 30 minutes before requesting again", 429);
     }
   }
-  // create otp
+  // create otp 
   const otp = targetUser.createPasswordResetOTP();
-  // otp attemps +1
+  // otp attemps +1 
   targetUser.otpAttempts += 1;
   targetUser.otpLastAttempt = now;
-  //save
+  //save 
   await targetUser.save({ validateBeforeSave: false });
   const otpExpire = Number(process.env.PASSWORD_OTP_EXPIRE_MINUTES) || 20;
-  // D. send email
+  // D. send email 
   try {
     await sendEmail({
       email: targetUser.email,
@@ -311,11 +311,11 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 //  [5] VERIFY EMAIL OTP for password
 exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
-  // A. email and otp requierd
+  // A. email and otp requierd 
   if (!email || !otp) {
     throw new AppError("Email and OTP are required", 400);
   }
-  // B. hashed otp
+  // B. hashed otp 
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
   // C. find email and reset otp hashed and expire in user and pendinguser
   const [user, pendingUser] = await Promise.all([
@@ -330,7 +330,7 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     }),
   ]);
-  // D. if not in user and pending user
+  // D. if not in user and pending user 
   if (!user && !pendingUser) {
     throw new AppError("Invalid or expired OTP", 400);
   }
@@ -343,7 +343,7 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
 //  [6] reset password
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
-  // A. all body required
+  // A. all body required 
   if (!email || !otp || !password || !confirmPassword) {
     throw new AppError("All fields are required", 400);
   }
@@ -372,14 +372,14 @@ exports.resetPassword = asyncHandler(async (req, res) => {
       resetPasswordExpire: { $gt: Date.now() },
     }),
   ]);
-  // E. target to look for the user and pending user hashed
+  // E. target to look for the user and pending user hashed 
   const targetUser = user || pendingUser;
   if (!targetUser) {
     throw new AppError("OTP invalid or expired", 400);
   }
   // E. hashed new password
   targetUser.password = await bcrypt.hash(password, 12);
-  // F. clean the otp hashed for can't used more time
+  // F. clean the otp hashed for can't used more time 
   targetUser.resetPasswordOTP = undefined;
   targetUser.resetPasswordExpire = undefined;
   // G. save new data
@@ -389,12 +389,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
 // [7] CHECK AVAILABILITY
 exports.checkAvailability = asyncHandler(async (req, res) => {
-  let { username, email, phone } = req.query;
-  // A. clean the data
-  username = username.trim().toLowerCase();
-  email = email.trim().toLowerCase();
-  phone = phone.trim();
-  // B. dall data requierd
+  const { username, email, phone } = req.query;
+  // A. dall data requierd
   if (!username && !email && !phone) {
     return errorResponseForAvailabilityNoData(
       res,
