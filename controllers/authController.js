@@ -214,10 +214,9 @@ exports.login = asyncHandler(async (req, res) => {
   }
   return errorResponse(
     res,
-    "Check your email for verification code"
+    "Your email is not verification Check your email  for Verify your email"
   );
 }
-
 
 // E. if user in user db
 //    1.check the password 
