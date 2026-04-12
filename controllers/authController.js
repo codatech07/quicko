@@ -298,11 +298,16 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       if (timePassed < waitTime) {
         const remainingTime = waitTime - timePassed;
 
-        // تحويل الوقت إلى دقائق وثواني
+        // تحويل الوقت إلى دقائق 
         const minutes = Math.floor(remainingTime / 60000);
-
+        const formatMinutes = (minutes) => {
+          if (minutes === 1) return "دقيقة واحدة";
+          if (minutes === 2) return "دقيقتين";
+          if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
+          return `${minutes} دقيقة`;
+        };
         throw new AppError(
-          `الرجاءالانتظار ${minutes} دقائق قبل إعادة الطلب`,
+          `الرجاءالانتظار ${formatMinutes(minutes)} قبل إعادة الطلب`,
           429,
         );
       }
