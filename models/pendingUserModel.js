@@ -12,8 +12,6 @@ const pendingUserSchema = new mongoose.Schema(
       lowercase: true,
       minlength: 5,
       maxlength: 20,
-      match:
-        /^(?=\S+$)(?=.{5,20}$)(?!.*[._]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$/,
     },
     email: {
       type: String,
@@ -29,7 +27,6 @@ const pendingUserSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 4,
     },
     resetPasswordOTP: String,
     resetPasswordExpire: Date,

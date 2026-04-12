@@ -28,7 +28,7 @@ const normalizePhone = (phone) => {
 };
 
 // Password
-const passwordRegex = /^(?=.*[A-Z])(?=\S+$).{4,}$/;
+const passwordRegex = /^(?=.*[A-Z])(?=\S+$).{6,}$/;
 
 module.exports = {
   usernameRegex,
