@@ -46,33 +46,33 @@ exports.register = asyncHandler(async (req, res) => {
   // Username validation
   if (!usernameRegex.test(username)) {
     throw new AppError(
-      "Username must be 5-20 chars, letters/numbers, can include _ or .",
+      "يجب أن يتكون اسم المستخدم من 5 إلى 20 حرفا على الأقل،وان يتكون من حروفًا/أرقامًا، ويمكن أن يتضمن _ أو .",
       400,
     );
   }
   // Email validation
   if (!emailRegex.test(email)) {
-    throw new AppError("Invalid email format", 400);
+    throw new AppError("تنسيق بريد إلكتروني غير صالح", 400);
   }
   // phone
   if (!phoneRegex.test(phone)) {
-    throw new AppError("Invalid phone number format", 400);
+    throw new AppError("تنسيق رقم الهاتف غير صالح", 400);
   }
   // password (Medium strength) Password strength validation
   if (!passwordRegex.test(password)) {
     throw new AppError(
-      "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
+      "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل وأن تتكون من 6 حروف أو أكثر، ولا يمكن أن تحتوي على مسافات",
       400,
     );
   }
   // Check password match
   if (password !== confirmPassword) {
-    throw new AppError("The passwords do not match", 400);
+    throw new AppError("كلمات المرور غير متطابقة", 400);
   }
   // B.normalize phone in data
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) {
-    throw new AppError("Invalid phone number format", 400);
+    throw new AppError("تنسيق رقم الهاتف غير صالح", 400);
   }
   // B. match the password and username and email and phone From user and pending user
   // Check username match from user and pending user
@@ -81,7 +81,7 @@ exports.register = asyncHandler(async (req, res) => {
     PendingUser.findOne({ username }),
   ]);
   if (userUsername || pendingUsername) {
-    throw new AppError("Username already in use", 400);
+    throw new AppError("اسم المستخدم مستخدم بالفعل", 400);
   }
   // Check email match from user and pending user
   const [userEmail, pendingEmail] = await Promise.all([
@@ -89,7 +89,7 @@ exports.register = asyncHandler(async (req, res) => {
     PendingUser.findOne({ email }),
   ]);
   if (userEmail || pendingEmail) {
-    throw new AppError("The email address is already in use", 400);
+    throw new AppError("عنوان البريد الإلكتروني مستخدم بالفعل", 400);
   }
   // Check phone match from user and pending user
   const [userPhone, pendingPhone] = await Promise.all([
@@ -97,7 +97,7 @@ exports.register = asyncHandler(async (req, res) => {
     PendingUser.findOne({ phone: normalizedPhone }),
   ]);
   if (userPhone || pendingPhone) {
-    throw new AppError("Phone number already in use", 400);
+    throw new AppError("رقم الهاتف مستخدم بالفعل", 400);
   }
   // C. password hashed and create pending user in db
   // password encryption
@@ -127,7 +127,7 @@ exports.register = asyncHandler(async (req, res) => {
   // E. Respone
   return successCreateResponse(
     res,
-    `User registered. Please verify your email`,
+    `تم تسجيل المستخدم. يرجى تأكيد بريدك الإلكتروني`,
   );
 });
 
@@ -139,7 +139,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   otp = otp.trim();
   // B . email and otp required
   if (!email || !otp) {
-    throw new AppError("Email and OTP required", 400);
+    throw new AppError("البريد الإلكتروني ورمز التحقق مطلوبان", 400);
   }
   // B. hashed password and find the user
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
@@ -150,7 +150,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   });
   // C. chek the email and otp :
   if (!pendingUser) {
-    throw new AppError("Invalid or expired OTP", 400);
+    throw new AppError("رمز التحقق  غير صالح أو منتهي الصلاحية", 400);
   }
   // D. create user in db user and verified true
   const user = await User.create({
@@ -165,7 +165,7 @@ exports.verifyEmail = asyncHandler(async (req, res) => {
   await PendingUser.deleteOne({ _id: pendingUser._id });
   const token = createToken(user._id);
   // F. Response
-  return successResponse(res, "Email verified successfully", {
+  return successResponse(res, "تم التحقق من البريد الإلكتروني بنجاح", {
     token,
     user: {
       id: user._id,
@@ -187,7 +187,7 @@ exports.login = asyncHandler(async (req, res) => {
   password = password.trim();
   // B. email or user name required
   if (!identifier || !password) {
-    throw new AppError("Please enter your email or username and password", 400);
+    throw new AppError("يرجى إدخال بريدك الإلكتروني أو اسم المستخدم وكلمة المرور", 400);
   }
   // C. Specify whether it is email or username
   const isEmail = identifier.includes("@");
@@ -201,14 +201,14 @@ exports.login = asyncHandler(async (req, res) => {
   ]);
   //      2. if not found anywhere
   if (!user && !pendingUser) {
-    throw new AppError("User not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
   // D. if user in pending user db
   //    1.check the password and create otp
   if (pendingUser) {
     const isMatch = await bcrypt.compare(password, pendingUser.password);
     if (!isMatch) {
-      throw new AppError("Incorrect password", 401);
+      throw new AppError("كلمة المرور خاطئة", 401);
     }
     const otp = pendingUser.createEmailVerificationOTP();
     await pendingUser.save({ isVerified: false });
@@ -223,18 +223,18 @@ exports.login = asyncHandler(async (req, res) => {
     }
     return errorResponse(
       res,
-      "Account not verified. Please check your email for verification code",
+      "لم يتم التحقق من الحساب. يرجى مراجعة بريدك الإلكتروني للحصول على رمز التحقق.",
     );
   }
   // E. if user in user db
   //    1.check the password
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AppError("Incorrect password", 400);
+    throw new AppError("كلمة المرور خاطئة", 400);
   }
   //    1.create token and log in
   const token = createToken(user._id);
-  return successResponse(res, "Login successful", {
+  return successResponse(res, "تم تسجيل الدخول بنجاح", {
     token,
     user: {
       id: user._id,
@@ -255,7 +255,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   email = email.trim().toLowerCase();
   // A. email is required
   if (!email) {
-    throw new AppError("Email is required", 400);
+    throw new AppError("البريد الإلكتروني مطلوب", 400);
   }
   // B. serch for email from user and pending user
   const [user, pendingUser] = await Promise.all([
@@ -263,7 +263,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     PendingUser.findOne({ email }),
   ]);
   if (!user && !pendingUser) {
-    throw new AppError("User not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
   //  C. create a new const to look for user and pending user otp
   const targetUser = user || pendingUser;
@@ -299,7 +299,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       const minutes = Math.floor(remainingTime / 60000);
 
       throw new AppError(
-        `الرجاءالانتظار ${minutes} قبل إعادة الطلب`,
+        `الرجاءالانتظار ${minutes} دقائق قبل إعادة الطلب`,
         429
       );
     }
@@ -323,7 +323,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   } catch (err) {
     console.log("send email failed");
   }
-  return successResponse(res, `OTP sent to email`);
+  return successResponse(res, `تم إرسال رمز التحقق إلى البريد الإلكتروني`);
 });
 
 //  [5] VERIFY EMAIL OTP for password
@@ -331,7 +331,7 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
   // A. email and otp requierd
   if (!email || !otp) {
-    throw new AppError("Email and OTP are required", 400);
+    throw new AppError("البريد الإلكتروني ورمز التحقق مطلوبان", 400);
   }
   // B. hashed otp
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
@@ -350,12 +350,12 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   ]);
   // D. if not in user and pending user
   if (!user && !pendingUser) {
-    throw new AppError("Invalid or expired OTP", 400);
+    throw new AppError("رمز التحقق غير صالح أو منتهي الصلاحية", 400);
   }
   // D. save the hashed and otp
   const targetUser = user || pendingUser;
   await targetUser.save({ validateBeforeSave: false });
-  return successResponse(res, "OTP verified successfully");
+  return successResponse(res, "تم التحقق بنجاح");
 });
 
 //  [6] reset password
@@ -363,18 +363,18 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, password, confirmPassword } = req.body;
   // A. all body required
   if (!email || !otp || !password || !confirmPassword) {
-    throw new AppError("All fields are required", 400);
+    throw new AppError("جميع الحقول مطلوبة", 400);
   }
   // B. chek the password
   if (!passwordRegex.test(password)) {
     throw new AppError(
-      "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
+      "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل وأن تتكون من 6 حروف أو أكثر، ولا يمكن أن تحتوي على مسافات",
       400,
     );
   }
   // C. chek the confirm password
   if (password !== confirmPassword) {
-    throw new AppError("Passwords do not match", 400);
+    throw new AppError("كلمات المرور غير متطابقة", 400);
   }
   // D. look the hashed otp pass in the user and pending user
   const hashedOTP = crypto.createHash("sha256").update(otp).digest("hex");
@@ -393,7 +393,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   // E. target to look for the user and pending user hashed
   const targetUser = user || pendingUser;
   if (!targetUser) {
-    throw new AppError("OTP invalid or expired", 400);
+    throw new AppError("رمز التحقق غير صالح أو منتهي الصلاحية", 400);
   }
   // E. hashed new password
   targetUser.password = await bcrypt.hash(password, 12);
