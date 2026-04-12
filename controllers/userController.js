@@ -2,7 +2,6 @@ const User = require("../models/userModel");
 const PendingUser = require("../models/pendingUserModel");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
-const { successResponse } = require("../utils/response");
 const AppError = require("../utils/AppError");
 const {
   usernameRegex,
