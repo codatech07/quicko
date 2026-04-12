@@ -9,10 +9,7 @@ const {
   passwordRegex,
   normalizePhone,
 } = require("../utils/validators/authValidators");
-const {
-  successResponse,
-  successDeleteResponse,
-} = require("../utils/response");
+const { successResponse, successDeleteResponse } = require("../utils/response");
 
 // GET MY PROFILE
 exports.getMe = asyncHandler(async (req, res) => {
@@ -25,14 +22,14 @@ exports.updateMe = asyncHandler(async (req, res) => {
   let { name, username, phone } = req.body;
   const user = await User.findById(req.user.id);
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
   // USERNAME
   if (username) {
     username = username.trim().toLowerCase();
     if (!usernameRegex.test(username)) {
       throw new AppError(
-        "Username must be 5-20 chars, letters/numbers, can include _ or .",
+        "يجب أن يتكون اسم المستخدم من 5 إلى 20 حرفا على الأقل،وان يتكون من حروفًا/أرقامًا، ويمكن أن يتضمن _ أو .",
         400,
       );
     }
@@ -42,7 +39,7 @@ exports.updateMe = asyncHandler(async (req, res) => {
         PendingUser.findOne({ username }),
       ]);
       if (userUsername || pendingUsername) {
-        throw new AppError("Username already in use", 400);
+        throw new AppError("اسم المستخدم مستخدم بالفعل", 400);
       }
       user.username = username;
     }
@@ -56,11 +53,11 @@ exports.updateMe = asyncHandler(async (req, res) => {
     phone = phone.trim();
 
     if (!phoneRegex.test(phone)) {
-      throw new AppError("Invalid phone number format", 400);
+      throw new AppError("تنسيق رقم الهاتف غير صالح", 400);
     }
     const normalizedPhone = normalizePhone(phone);
     if (!normalizedPhone) {
-      throw new AppError("Invalid phone number format", 400);
+      throw new AppError("تنسيق رقم الهاتف غير صالح", 400);
     }
     if (normalizedPhone !== user.phone) {
       const [userPhone, pendingPhone] = await Promise.all([
@@ -69,13 +66,13 @@ exports.updateMe = asyncHandler(async (req, res) => {
       ]);
 
       if (userPhone || pendingPhone) {
-        throw new AppError("Phone number already in use", 400);
+        throw new AppError("رقم الهاتف مستخدم بالفعل", 400);
       }
       user.phone = normalizedPhone;
     }
   }
   await user.save();
-  return successResponse(res, "Data updated successfully", user);
+  return successResponse(res, "تم تحديث البيانات بنجاح", user);
 });
 
 // CHANGE PASSWORD
@@ -84,39 +81,39 @@ exports.changePassword = asyncHandler(async (req, res) => {
   // password validate
   if (!passwordRegex.test(newPassword)) {
     throw new AppError(
-      "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
+      "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل وأن تتكون من 6 حروف أو أكثر، ولا يمكن أن تحتوي على مسافات",
       400,
     );
   }
   const user = await User.findById(req.user.id).select("+password");
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
   const isMatch = await bcrypt.compare(oldPassword, user.password);
   if (!isMatch) {
-    throw new AppError("The old password is incorrect", 400);
+    throw new AppError("كلمة المرور القديمة غير صحيحة", 400);
   }
   if (newPassword !== confirmPassword) {
-    throw new AppError("The passwords do not match", 400);
+    throw new AppError("كلمات المرور غير متطابقة", 400);
   }
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
-  return successResponse(res, "Password changed successfully");
+  return successResponse(res, "تم تغيير كلمة المرور بنجاح");
 });
 
 // GET USER BY ID (Admin only)
 exports.getUserById = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
-  return successResponse(res, "User retrieved successfully", user);
+  return successResponse(res, "تم استيراد المستخدم بنجاح", user);
 });
 
 // GET ALL USERS (Admin only)
 exports.getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select("-password");
-  return successResponse(res, "Users retrieved successfully", {
+  return successResponse(res, "تم استيراد المستخدم بنجاح", {
     count: users.length,
     users,
   });
@@ -126,7 +123,7 @@ exports.getAllUsers = asyncHandler(async (req, res) => {
 exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
   if (!user) {
-    throw new AppError("User not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
   await user.deleteOne();
   return successDeleteResponse(res);
@@ -136,15 +133,15 @@ exports.deleteUser = asyncHandler(async (req, res) => {
 exports.getPendingUserById = asyncHandler(async (req, res) => {
   const user = await PendingUser.findById(req.params.id).select("-password");
   if (!user) {
-    throw new AppError("Pending user not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
-  return successResponse(res, "Pending user retrieved successfully", user);
+  return successResponse(res, "تم استيراد المستخدم بنجاح", user);
 });
 
 // GET ALL PENDING USERS (Admin only)
 exports.getAllPendingUsers = asyncHandler(async (req, res) => {
   const users = await PendingUser.find().select("-password");
-  return successResponse(res, "Pending users retrieved successfully", {
+  return successResponse(res, "تم استيراد المستخدمين بنجاح", {
     count: users.length,
     users,
   });
@@ -154,7 +151,7 @@ exports.getAllPendingUsers = asyncHandler(async (req, res) => {
 exports.deletePendingUser = asyncHandler(async (req, res) => {
   const user = await PendingUser.findById(req.params.id);
   if (!user) {
-    throw new AppError("Pending user not found", 404);
+    throw new AppError("لم يتم العثور على المستخدم", 404);
   }
   await user.deleteOne();
   return successDeleteResponse(res);

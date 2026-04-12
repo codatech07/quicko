@@ -41,7 +41,7 @@ exports.register = asyncHandler(async (req, res) => {
   phone = phone.trim();
   // Ensure all fields exist
   if (!name || !username || !email || !phone || !password || !confirmPassword) {
-    throw new AppError("All fields are required", 400);
+    throw new AppError("جميع الحقول مطلوبة", 400);
   }
   // Username validation
   if (!usernameRegex.test(username)) {
@@ -187,7 +187,10 @@ exports.login = asyncHandler(async (req, res) => {
   password = password.trim();
   // B. email or user name required
   if (!identifier || !password) {
-    throw new AppError("يرجى إدخال بريدك الإلكتروني أو اسم المستخدم وكلمة المرور", 400);
+    throw new AppError(
+      "يرجى إدخال بريدك الإلكتروني أو اسم المستخدم وكلمة المرور",
+      400,
+    );
   }
   // C. Specify whether it is email or username
   const isEmail = identifier.includes("@");
@@ -276,7 +279,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   }
 
   if (targetUser.otpAttempts >= 5) {
-    throw new AppError("لقد وصلت إلى الحد الأقصى لطلبات رمز التحقق ", 429);
+    throw new AppError("لقد وصلت إلى الحد الأقصى لطلبات رمز التحقق اليوم", 429);
   }
 
   // if (targetUser.otpAttempts >= 3) {
@@ -288,21 +291,21 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   //   }
   // }
   if (targetUser.otpAttempts >= 3) {
-  if (targetUser.otpLastAttempt) {
-    const waitTime = 30 * 60 * 1000; // 30 minutes in ms
-    const timePassed = now - targetUser.otpLastAttempt;
+    if (targetUser.otpLastAttempt) {
+      const waitTime = 30 * 60 * 1000; // 30 minutes in ms
+      const timePassed = now - targetUser.otpLastAttempt;
 
-    if (timePassed < waitTime) {
-      const remainingTime = waitTime - timePassed;
+      if (timePassed < waitTime) {
+        const remainingTime = waitTime - timePassed;
 
-      // تحويل الوقت إلى دقائق وثواني
-      const minutes = Math.floor(remainingTime / 60000);
+        // تحويل الوقت إلى دقائق وثواني
+        const minutes = Math.floor(remainingTime / 60000);
 
-      throw new AppError(
-        `الرجاءالانتظار ${minutes} دقائق قبل إعادة الطلب`,
-        429
-      );
-    }
+        throw new AppError(
+          `الرجاءالانتظار ${minutes} دقائق قبل إعادة الطلب`,
+          429,
+        );
+      }
     }
   }
   // create otp
@@ -402,7 +405,7 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   targetUser.resetPasswordExpire = undefined;
   // G. save new data
   await targetUser.save();
-  return successResponse(res, "Password reset successful");
+  return successResponse(res, "تمت إعادة تعيين كلمة المرور بنجاح");
 });
 
 // [7] CHECK AVAILABILITY
@@ -412,7 +415,7 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
   if (!username && !email && !phone) {
     return errorResponseForAvailabilityNoData(
       res,
-      "Please provide username or email or phone",
+      "يرجى ادخال اسم المستخدم و البريد الإلكتروني أو رقم الهاتف",
     );
   }
   // USERNAME
@@ -421,7 +424,7 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
     if (!usernameRegex.test(normalizedUsername)) {
       return errorResponseForHandred(
         res,
-        "Invalid username format (5-20 chars, letters/numbers, . or _)",
+        "يجب أن يتكون اسم المستخدم من 5 إلى 20 حرفا على الأقل،وان يتكون من حروفًا/أرقامًا، ويمكن أن يتضمن _ أو .",
       );
     }
     const [user, pendingUser] = await Promise.all([
@@ -429,24 +432,27 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
       PendingUser.findOne({ username: normalizedUsername }),
     ]);
     if (user || pendingUser) {
-      return errorResponseForAvailability(res, "Username already in use");
+      return errorResponseForAvailability(res, "اسم المستخدم مستخدم بالفعل");
     }
-    return successResponseForAvailability(res, "Username available");
+    return successResponseForAvailability(res, "اسم المستخدم متاح");
   }
   // EMAIL
   if (email) {
     const normalizedEmail = email.trim().toLowerCase();
     if (!emailRegex.test(normalizedEmail)) {
-      return errorResponseForHandred(res, "Invalid email format");
+      return errorResponseForHandred(res, "تنسيق بريد إلكتروني غير صالح");
     }
     const [user, pendingUser] = await Promise.all([
       User.findOne({ email: normalizedEmail }),
       PendingUser.findOne({ email: normalizedEmail }),
     ]);
     if (user || pendingUser) {
-      return errorResponseForAvailability(res, "Email already in use");
+      return errorResponseForAvailability(
+        res,
+        "عنوان البريد الإلكتروني مستخدم بالفعل",
+      );
     }
-    return successResponseForAvailability(res, "Email available");
+    return successResponseForAvailability(res, "البريد الإلكتروني متاح");
   }
   // PHONE
   if (phone) {
@@ -456,24 +462,24 @@ exports.checkAvailability = asyncHandler(async (req, res) => {
       cleanedPhone = "+" + cleanedPhone;
     }
     if (!phoneRegex.test(cleanedPhone)) {
-      return errorResponseForHandred(res, "Invalid phone number format");
+      return errorResponseForHandred(res, "تنسيق رقم الهاتف غير صالح");
     }
     const normalizedPhone = normalizePhone(cleanedPhone);
     if (!normalizedPhone) {
-      return errorResponseForHandred(res, "Invalid phone number");
+      return errorResponseForHandred(res, "رقم هاتف غير صالح");
     }
     const [user, pendingUser] = await Promise.all([
       User.findOne({ phone: normalizedPhone }),
       PendingUser.findOne({ phone: normalizedPhone }),
     ]);
     if (user || pendingUser) {
-      return errorResponseForAvailability(res, "Phone already in use");
+      return errorResponseForAvailability(res, "رقم الهاتف مستخدم بالفعل");
     }
-    return successResponseForAvailability(res, "Phone available");
+    return successResponseForAvailability(res, "رقم الهاتف متاح");
   }
 });
 
 // [8] log out
 exports.logout = asyncHandler(async (req, res) => {
-  return successResponse(res, "Logged out successfully");
+  return successResponse(res, "تم تسجيل الخروج بنجاح");
 });
