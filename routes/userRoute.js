@@ -24,7 +24,7 @@ router.get("/", protect, isAdmin, getAllUsers);
 router.get("/:id", protect, isAdmin, getUserById);
 router.delete("/:id", protect, isAdmin, deleteUser);
 // Pending Users (Admin only)
-router.get("/pending", isAdmin, getAllPendingUsers);
-router.get("/pending/:id", isAdmin, getPendingUserById);
-router.delete("/pending/:id", isAdmin, deletePendingUser);
+router.get("/pending", protect, isAdmin, getAllPendingUsers);
+router.get("/pending/:id", protect, isAdmin, getPendingUserById);
+router.delete("/pending/:id", protect, isAdmin, deletePendingUser);
 module.exports = router;
