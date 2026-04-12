@@ -5,7 +5,7 @@ const usernameRegex =
 // Email
 const emailRegex = /^[\w.-]+@[\w.-]+\.\w{2,}$/;
 
-// Phone 
+// Phone
 const phoneRegex = /^(09\d{8}|\+9639\d{8}|009639\d{8})$/;
 
 // check the phone format
@@ -13,7 +13,7 @@ const normalizePhone = (phone) => {
   phone = phone.trim();
 
   if (phone.startsWith("09")) {
-    return phone.slice(2); // آخر 8 أرقام
+    return phone.slice(2); // last 8 number
   }
 
   if (phone.startsWith("+9639")) {
@@ -24,7 +24,7 @@ const normalizePhone = (phone) => {
     return phone.slice(6); // 009639 + 8 digits
   }
 
-  return null; // رقم غير صالح
+  return null;
 };
 
 // Password

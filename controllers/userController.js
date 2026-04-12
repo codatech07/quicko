@@ -1,8 +1,16 @@
 const User = require("../models/userModel");
+const PendingUser = require("../models/pendingUserModel");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const { successResponse } = require("../utils/response");
 const AppError = require("../utils/AppError");
+const {
+  usernameRegex,
+  emailRegex,
+  phoneRegex,
+  passwordRegex,
+  normalizePhone,
+} = require("../utils/validators/authValidators");
 
 // GET MY PROFILE
 exports.getMe = asyncHandler(async (req, res) => {
@@ -12,32 +20,61 @@ exports.getMe = asyncHandler(async (req, res) => {
 
 // UPDATE PROFILE (name + username + phone)
 exports.updateMe = asyncHandler(async (req, res) => {
-  const { name, username, phone } = req.body;
+  // Extract and normalize input
+  let { name, username, phone } = req.body;
+  // chek the user id if found
   const user = await User.findById(req.user.id);
   if (!user) {
     throw new AppError("User not found", 404);
   }
+  // NAME
+  if (name) {
+    user.name = name.trim();
+  }
+  // USERNAME
+  // chek the validate
   if (username) {
     const normalizedUsername = username.trim().toLowerCase();
+    // validation
+    if (!usernameRegex.test(normalizedUsername)) {
+      throw new AppError(
+        "Username must be 5-20 chars, letters/numbers, can include _ or .",
+        400,
+      );
+    }
     if (normalizedUsername !== user.username) {
-      const exists = await User.findOne({ username: normalizedUsername });
-      if (exists) {
+      const [existingUser, existingPending] = await Promise.all([
+        User.findOne({ username: normalizedUsername }),
+        PendingUser.findOne({ username: normalizedUsername }),
+      ]);
+      if (existingUser || existingPending) {
         throw new AppError("Username already in use", 400);
       }
       user.username = normalizedUsername;
     }
   }
-  if (name) user.name = name;
-  if (phone && phone !== user.phone) {
-    const phoneRegex = /^[0-9]{8,15}$/;
+  // PHONE
+  if (phone) {
+    phone = phone.trim();
+
+    // validation
     if (!phoneRegex.test(phone)) {
-      throw new AppError("Invalid phone number", 400);
+      throw new AppError("Invalid phone number format", 400);
     }
-    const exists = await User.findOne({ phone });
-    if (exists) {
-      throw new AppError("Phone number already in use", 400);
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      throw new AppError("Invalid phone number format", 400);
     }
-    user.phone = phone;
+    if (normalizedPhone !== user.phone) {
+      const [existingUser, existingPending] = await Promise.all([
+        User.findOne({ phone: normalizedPhone }),
+        PendingUser.findOne({ phone: normalizedPhone }),
+      ]);
+      if (existingUser || existingPending) {
+        throw new AppError("Phone number already in use", 400);
+      }
+      user.phone = normalizedPhone;
+    }
   }
   await user.save();
   return successResponse(res, "Data updated successfully", user);

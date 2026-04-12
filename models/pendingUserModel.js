@@ -60,7 +60,10 @@ pendingUserSchema.methods.createPasswordResetOTP = function () {
 // email update OTP
 pendingUserSchema.methods.createEmailVerificationOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  this.emailVerificationOTP = crypto.createHash("sha256").update(otp).digest("hex");
+  this.emailVerificationOTP = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
   const expireMinutes = Number(process.env.EMAIL_OTP_EXPIRE_MINUTES) || 20;
   this.emailVerificationExpire = Date.now() + expireMinutes * 60 * 1000;
   console.log("register otp created from pending shema");
