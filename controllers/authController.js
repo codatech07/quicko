@@ -299,7 +299,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       const minutes = Math.floor(remainingTime / 60000);
 
       throw new AppError(
-        `الرجاءالانتظار ${minutes}قبل إعادة الطلب`,
+        `الرجاءالانتظار ${minutes} قبل إعادة الطلب`,
         429
       );
     }
