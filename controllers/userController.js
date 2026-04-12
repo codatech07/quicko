@@ -73,7 +73,6 @@ exports.updateMe = asyncHandler(async (req, res) => {
     }
   }
   await user.save();
-
   return successResponse(res, "Data updated successfully", user);
 });
 
@@ -128,4 +127,32 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   }
   await user.deleteOne();
   return successResponse(res, "User deleted successfully");
+});
+
+// GET PENDING USER BY ID (Admin only)
+exports.getPendingUserById = asyncHandler(async (req, res) => {
+  const user = await PendingUser.findById(req.params.id).select("-password");
+  if (!user) {
+    throw new AppError("Pending user not found", 404);
+  }
+  return successResponse(res, "Pending user retrieved successfully", user);
+});
+
+// GET ALL PENDING USERS (Admin only)
+exports.getAllPendingUsers = asyncHandler(async (req, res) => {
+  const users = await PendingUser.find().select("-password");
+  return successResponse(res, "Pending users retrieved successfully", {
+    count: users.length,
+    users,
+  });
+});
+
+// DELETE PENDING USER (Admin only)
+exports.deletePendingUser = asyncHandler(async (req, res) => {
+  const user = await PendingUser.findById(req.params.id);
+  if (!user) {
+    throw new AppError("Pending user not found", 404);
+  }
+  await user.deleteOne();
+  return successResponse(res, "Pending user deleted successfully");
 });

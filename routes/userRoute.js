@@ -7,6 +7,9 @@ const {
   getUserById,
   getAllUsers,
   deleteUser,
+  getAllPendingUsers,
+  getPendingUserById,
+  deletePendingUser,
 } = require("../controllers/userController");
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
@@ -20,4 +23,8 @@ router.put("/change-password", protect, changePassword);
 router.get("/", protect, isAdmin, getAllUsers);
 router.get("/:id", protect, isAdmin, getUserById);
 router.delete("/:id", protect, isAdmin, deleteUser);
+// Pending Users (Admin only)
+router.get("/pending", isAdmin, getAllPendingUsers);
+router.get("/pending/:id", isAdmin, getPendingUserById);
+router.delete("/pending/:id", isAdmin, deletePendingUser);
 module.exports = router;
