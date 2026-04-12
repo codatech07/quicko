@@ -62,7 +62,8 @@ exports.createShop = asyncHandler(async (req, res) => {
 // get all the shops
 exports.getShops = asyncHandler(async (req, res) => {
   const shops = await Shop.find().populate("owner", "name username");
-  return successResponse(res, "Shops fetched successfully", shops);
+  const count = shops.length;
+  return successResponse(res, "Shops fetched successfully", count, shops);
 });
 
 // get shop by ID
