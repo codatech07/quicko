@@ -20,44 +20,39 @@ exports.getMe = asyncHandler(async (req, res) => {
 
 // UPDATE PROFILE (name + username + phone)
 exports.updateMe = asyncHandler(async (req, res) => {
-  // Extract and normalize input
   let { name, username, phone } = req.body;
-  // chek the user id if found
   const user = await User.findById(req.user.id);
   if (!user) {
     throw new AppError("User not found", 404);
   }
-  // NAME
-  if (name) {
-    user.name = name.trim();
-  }
   // USERNAME
-  // chek the validate
   if (username) {
-    const normalizedUsername = username.trim().toLowerCase();
-    // validation
-    if (!usernameRegex.test(normalizedUsername)) {
+    username = username.trim().toLowerCase();
+    if (!usernameRegex.test(username)) {
       throw new AppError(
         "Username must be 5-20 chars, letters/numbers, can include _ or .",
         400,
       );
     }
-    if (normalizedUsername !== user.username) {
-      const [existingUser, existingPending] = await Promise.all([
-        User.findOne({ username: normalizedUsername }),
-        PendingUser.findOne({ username: normalizedUsername }),
+    if (username !== user.username) {
+      const [userUsername, pendingUsername] = await Promise.all([
+        User.findOne({ username, _id: { $ne: user._id } }),
+        PendingUser.findOne({ username }),
       ]);
-      if (existingUser || existingPending) {
+      if (userUsername || pendingUsername) {
         throw new AppError("Username already in use", 400);
       }
-      user.username = normalizedUsername;
+      user.username = username;
     }
+  }
+  // NAME
+  if (name) {
+    user.name = name.trim();
   }
   // PHONE
   if (phone) {
     phone = phone.trim();
 
-    // validation
     if (!phoneRegex.test(phone)) {
       throw new AppError("Invalid phone number format", 400);
     }
@@ -66,17 +61,19 @@ exports.updateMe = asyncHandler(async (req, res) => {
       throw new AppError("Invalid phone number format", 400);
     }
     if (normalizedPhone !== user.phone) {
-      const [existingUser, existingPending] = await Promise.all([
-        User.findOne({ phone: normalizedPhone }),
+      const [userPhone, pendingPhone] = await Promise.all([
+        User.findOne({ phone: normalizedPhone, _id: { $ne: user._id } }),
         PendingUser.findOne({ phone: normalizedPhone }),
       ]);
-      if (existingUser || existingPending) {
+
+      if (userPhone || pendingPhone) {
         throw new AppError("Phone number already in use", 400);
       }
       user.phone = normalizedPhone;
     }
   }
   await user.save();
+
   return successResponse(res, "Data updated successfully", user);
 });
 
