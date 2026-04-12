@@ -298,7 +298,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       if (timePassed < waitTime) {
         const remainingTime = waitTime - timePassed;
 
-        // تحويل الوقت إلى دقائق 
+        // تحويل الوقت إلى دقائق
         const minutes = Math.floor(remainingTime / 60000);
         const formatMinutes = (minutes) => {
           if (minutes === 1) return "دقيقة واحدة";

@@ -1,18 +1,18 @@
 const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
-const { successResponse } = require("../utils/response");
+const { successResponse, successDeleteResponse } = require("../utils/response");
 const AppError = require("../utils/AppError");
 
 // create shop
 exports.createShop = asyncHandler(async (req, res) => {
-  const { name, description, image, phone, address } = req.body;
+  const { name, description, images, phone, address } = req.body;
   if (!name || !phone || !address) {
     throw new AppError("Name and Phone and Address Required", 400);
   }
   const shop = await Shop.create({
     name,
     description,
-    image,
+    images,
     phone,
     address,
     owner: req.user.id,
@@ -48,13 +48,27 @@ exports.updateShop = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {
     throw new AppError("Not authorized, admin only", 403);
   }
-  shop.name = req.body.name || shop.name;
-  shop.description = req.body.description || shop.description;
-  shop.image = req.body.image || shop.image;
-  shop.phone = req.body.phone || shop.phone;
-  shop.address = req.body.address || shop.address;
+
+
+  const { name, description, images, phone, address } = req.body;
+
+   // ✅ normalize images (إذا موجودة فقط)
+  if (images !== undefined) {
+    if (!Array.isArray(images)) {
+      shop.images = [images]; // صورة وحدة
+    } else {
+      shop.images = images; // array
+    }
+  }
+
+  shop.name = name || shop.name;
+  shop.description = description || shop.description;
+  shop.phone = phone || shop.phone;
+  shop.address = address || shop.address;
+
   await shop.save();
-  return successResponse(res, "Shop updated successfully");
+
+  return successResponse(res, "Shop updated successfully", shop);
 });
 
 // Delete shop
@@ -68,5 +82,5 @@ exports.deleteShop = asyncHandler(async (req, res) => {
     throw new AppError("Not authorized, admin only", 403);
   }
   await shop.deleteOne();
-  return successResponse(res, "Shop deleted successfully", 204);
+  return successDeleteResponse(res);
 });

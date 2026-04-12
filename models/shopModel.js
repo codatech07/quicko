@@ -10,9 +10,9 @@ const shopSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    image: {
-      type: String,
-      default: "",
+    images: {
+      type: [String],
+      default: [],
     },
     phone: {
       type: String,
