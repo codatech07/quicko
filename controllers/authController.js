@@ -276,7 +276,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   }
 
   if (targetUser.otpAttempts >= 5) {
-    throw new AppError("You reached max OTP requests today", 429);
+    throw new AppError("لقد وصلت إلى الحد الأقصى لطلبات رمز التحقق ", 429);
   }
 
   if (targetUser.otpAttempts >= 3) {
@@ -284,7 +284,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       targetUser.otpLastAttempt &&
       now - targetUser.otpLastAttempt < 30 * 60 * 1000
     ) {
-      throw new AppError("Wait 30 minutes before requesting again", 429);
+      throw new AppError("الرجاء الانتظار 30 دقيقة قبل إعادة الطلب", 429);
     }
   }
   // create otp

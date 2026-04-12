@@ -5,19 +5,12 @@ const bcrypt = require("bcryptjs");
 const AppError = require("../utils/AppError");
 const {
   usernameRegex,
-  emailRegex,
   phoneRegex,
   passwordRegex,
   normalizePhone,
 } = require("../utils/validators/authValidators");
 const {
   successResponse,
-  errorResponse,
-  successCreateResponse,
-  errorResponseForAvailability,
-  successResponseForAvailability,
-  errorResponseForAvailabilityNoData,
-  errorResponseForHandred,
   successDeleteResponse,
 } = require("../utils/response");
 
