@@ -279,12 +279,29 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     throw new AppError("لقد وصلت إلى الحد الأقصى لطلبات رمز التحقق ", 429);
   }
 
+  // if (targetUser.otpAttempts >= 3) {
+  //   if (
+  //     targetUser.otpLastAttempt &&
+  //     now - targetUser.otpLastAttempt < 30 * 60 * 1000
+  //   ) {
+  //     throw new AppError("الرجاء الانتظار 30 دقيقة قبل إعادة الطلب", 429);
+  //   }
+  // }
   if (targetUser.otpAttempts >= 3) {
-    if (
-      targetUser.otpLastAttempt &&
-      now - targetUser.otpLastAttempt < 30 * 60 * 1000
-    ) {
-      throw new AppError("الرجاء الانتظار 30 دقيقة قبل إعادة الطلب", 429);
+  if (targetUser.otpLastAttempt) {
+    const waitTime = 30 * 60 * 1000; // 30 minutes in ms
+    const timePassed = now - targetUser.otpLastAttempt;
+
+    if (timePassed < waitTime) {
+      const remainingTime = waitTime - timePassed;
+
+      // تحويل الوقت إلى دقائق وثواني
+      const minutes = Math.floor(remainingTime / 60000);
+
+      throw new AppError(
+        `الرجاءالانتظار ${minutes}قبل إعادة الطلب`,
+        429
+      );
     }
   }
   // create otp
