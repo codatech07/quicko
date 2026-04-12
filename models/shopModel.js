@@ -9,6 +9,20 @@ const shopSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
+      required: true,
+    },
+    category: {
+      type: String,
+      required: [true, "category required"],
+      enum: [
+        "food",
+        "electronics",
+        "clothes",
+        "pharmacy",
+        "mini market",
+        "other",
+      ],
+      trim: true,
     },
     images: {
       type: [String],
@@ -18,10 +32,26 @@ const shopSchema = new mongoose.Schema(
       type: String,
       required: [true, "Contact number required"],
     },
+
     address: {
       type: String,
       required: [true, "Address required"],
       trim: true,
+    },
+
+    ratingAvg: {
+      type: Number,
+      default: 0,
+    },
+
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
+
+    views: {
+      type: Number,
+      default: 0,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

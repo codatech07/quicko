@@ -2,19 +2,58 @@ const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
 const { successResponse, successDeleteResponse } = require("../utils/response");
 const AppError = require("../utils/AppError");
+const {
+  phoneRegex,
+  normalizePhone,
+} = require("../utils/validators/authValidators");
 
-// create shop
+// create shop only admin
 exports.createShop = asyncHandler(async (req, res) => {
-  const { name, description, images, phone, address } = req.body;
-  if (!name || !phone || !address) {
-    throw new AppError("Name and Phone and Address Required", 400);
+  let { name, description, images, phone, address, category } = req.body;
+  // admin check
+  if (req.user.role !== "admin") {
+    throw new AppError("Not authorized, admin only", 403);
   }
+  // 1. required check
+  if (!name || !phone || !address || !category || !description) {
+    throw new AppError("All fields required", 400);
+  }
+  // 2. trim
+  name = name.trim();
+  phone = phone.trim();
+  address = address.trim();
+  description = description.trim();
+  category = category.trim();
+  // ⭐ هنا ضيفه
+  const allowedCategories = [
+    "food",
+    "electronics",
+    "clothes",
+    "pharmacy",
+    "mini market",
+    "other",
+  ];
+  if (!allowedCategories.includes(category)) {
+    throw new AppError("Invalid category", 400);
+  }
+  // 3. images normalize
+  const imagesArray = images ? (Array.isArray(images) ? images : [images]) : [];
+  // 4. phone validation
+  if (!phoneRegex.test(phone)) {
+    throw new AppError("Invalid phone format", 400);
+  }
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) {
+    throw new AppError("Invalid phone format", 400);
+  }
+  // 5. create shop
   const shop = await Shop.create({
     name,
     description,
-    images,
-    phone,
+    images: imagesArray,
+    phone: normalizedPhone,
     address,
+    category,
     owner: req.user.id,
   });
   return successResponse(res, "Shop created successfully", shop, 201);
@@ -28,6 +67,11 @@ exports.getShops = asyncHandler(async (req, res) => {
 
 // get shop by ID
 exports.getShopById = asyncHandler(async (req, res) => {
+  // ⭐ increase views (أفضل من save)
+  await Shop.findByIdAndUpdate(req.params.id, {
+    $inc: { views: 1 },
+  });
+  // ⭐ fetch shop بعد التحديث
   const shop = await Shop.findById(req.params.id).populate(
     "owner",
     "name username",
@@ -44,30 +88,63 @@ exports.updateShop = asyncHandler(async (req, res) => {
   if (!shop) {
     throw new AppError("The shop is not there", 404);
   }
-  // 🔒 فقط admin
+  // 🔒 admin only
   if (req.user.role !== "admin") {
     throw new AppError("Not authorized, admin only", 403);
   }
-
-
-  const { name, description, images, phone, address } = req.body;
-
-   // ✅ normalize images (إذا موجودة فقط)
-  if (images !== undefined) {
-    if (!Array.isArray(images)) {
-      shop.images = [images]; // صورة وحدة
-    } else {
-      shop.images = images; // array
-    }
+  let { name, description, images, phone, address, category } = req.body;
+  // 🧠 NAME
+  if (name) {
+    name = name.trim();
+    shop.name = name;
   }
+  // 🧠 DESCRIPTION
+  if (description) {
+    description = description.trim();
+    shop.description = description;
+  }
+  // 🧠 CATEGORY
+  if (category) {
+    category = category.trim();
 
-  shop.name = name || shop.name;
-  shop.description = description || shop.description;
-  shop.phone = phone || shop.phone;
-  shop.address = address || shop.address;
+    const allowedCategories = [
+      "food",
+      "electronics",
+      "clothes",
+      "pharmacy",
+      "mini market",
+      "other",
+    ];
 
+    if (!allowedCategories.includes(category)) {
+      throw new AppError("Invalid category", 400);
+    }
+
+    shop.category = category;
+  }
+  // 🧠 ADDRESS
+  if (address) {
+    address = address.trim();
+    shop.address = address;
+  }
+  // 🧠 PHONE (نفس منطق createShop)
+  if (phone) {
+    phone = phone.trim();
+    if (!phoneRegex.test(phone)) {
+      throw new AppError("Invalid phone format", 400);
+    }
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      throw new AppError("Invalid phone format", 400);
+    }
+    shop.phone = normalizedPhone;
+  }
+  // 🧠 IMAGES (نفس فكرة normalize)
+  if (images !== undefined) {
+    const imagesArray = Array.isArray(images) ? images : [images];
+    shop.images = imagesArray;
+  }
   await shop.save();
-
   return successResponse(res, "Shop updated successfully", shop);
 });
 
