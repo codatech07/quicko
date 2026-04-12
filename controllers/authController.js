@@ -303,6 +303,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
         429
       );
     }
+    }
   }
   // create otp
   const otp = targetUser.createPasswordResetOTP();
