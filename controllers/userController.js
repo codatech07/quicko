@@ -11,6 +11,16 @@ const {
   passwordRegex,
   normalizePhone,
 } = require("../utils/validators/authValidators");
+const {
+  successResponse,
+  errorResponse,
+  successCreateResponse,
+  errorResponseForAvailability,
+  successResponseForAvailability,
+  errorResponseForAvailabilityNoData,
+  errorResponseForHandred,
+  successDeleteResponse,
+} = require("../utils/response");
 
 // GET MY PROFILE
 exports.getMe = asyncHandler(async (req, res) => {
@@ -79,8 +89,12 @@ exports.updateMe = asyncHandler(async (req, res) => {
 // CHANGE PASSWORD
 exports.changePassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword, confirmPassword } = req.body;
-  if (newPassword.includes(" ")) {
-    throw new AppError("The password cannot contain spaces", 400);
+  // password validate
+  if (!passwordRegex.test(newPassword)) {
+    throw new AppError(
+      "Password must contain at least 1 uppercase letter and be 4+ characters,can't include space",
+      400,
+    );
   }
   const user = await User.findById(req.user.id).select("+password");
   if (!user) {
@@ -92,9 +106,6 @@ exports.changePassword = asyncHandler(async (req, res) => {
   }
   if (newPassword !== confirmPassword) {
     throw new AppError("The passwords do not match", 400);
-  }
-  if (newPassword.length < 6) {
-    throw new AppError("The password is too short", 400);
   }
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
@@ -126,7 +137,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
     throw new AppError("User not found", 404);
   }
   await user.deleteOne();
-  return successResponse(res, "User deleted successfully");
+  return successDeleteResponse(res);
 });
 
 // GET PENDING USER BY ID (Admin only)
@@ -154,5 +165,5 @@ exports.deletePendingUser = asyncHandler(async (req, res) => {
     throw new AppError("Pending user not found", 404);
   }
   await user.deleteOne();
-  return successResponse(res, "Pending user deleted successfully");
+  return successDeleteResponse(res);
 });

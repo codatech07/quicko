@@ -7,6 +7,9 @@ exports.errorResponse = (res, message, data, statusCode = 400) => {
 exports.successCreateResponse = (res, message, statusCode = 201) => {
   return res.status(statusCode).json({ status: "success", message });
 };
+exports.successDeleteResponse = (res, statusCode = 204) => {
+  return res.status(statusCode).json({});
+};
 
 // CHECK AVAILABILITY RESPONSES
 exports.successResponseForAvailability = (res, message, statusCode = 200) => {
@@ -24,10 +27,6 @@ exports.errorResponseForAvailabilityNoData = (
 };
 
 // 400 error respone
-exports.errorResponseForHandred = (
-  res,
-  message,
-  statusCode = 400,
-) => {
+exports.errorResponseForHandred = (res, message, statusCode = 400) => {
   return res.status(statusCode).json({ message });
 };
