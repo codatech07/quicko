@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { SHOPCATEGORIES } = require("../utils/validators/constantsShopProduct");
 const shopSchema = new mongoose.Schema(
   {
     name: {
@@ -14,14 +15,7 @@ const shopSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, "category required"],
-      enum: [
-        "food",
-        "electronics",
-        "clothes",
-        "pharmacy",
-        "mini market",
-        "other",
-      ],
+      enum: SHOPCATEGORIES,
       trim: true,
     },
     images: {

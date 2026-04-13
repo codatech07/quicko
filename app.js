@@ -10,6 +10,8 @@ app.use("/api/auth", require("./routes/authRoute"));
 app.use("/api/users", require("./routes/userRoute"));
 // shops
 app.use("/api/shops", require("./routes/shopRoute"));
+// product
+app.use("/api/products", require("./routes/productRoute"));
 // route not found handler
 const AppError = require("./utils/AppError");
 

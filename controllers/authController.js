@@ -278,7 +278,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     targetUser.otpAttempts = 0;
   }
 
-  if (targetUser.otpAttempts >= 5) {
+  if (targetUser.otpAttempts >= 200) {
     throw new AppError("لقد وصلت إلى الحد الأقصى لطلبات رمز التحقق اليوم", 429);
   }
 
@@ -290,7 +290,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   //     throw new AppError("الرجاء الانتظار 30 دقيقة قبل إعادة الطلب", 429);
   //   }
   // }
-  if (targetUser.otpAttempts >= 3) {
+  if (targetUser.otpAttempts >= 150) {
     if (targetUser.otpLastAttempt) {
       const waitTime = 30 * 60 * 1000; // 30 minutes in ms
       const timePassed = now - targetUser.otpLastAttempt;

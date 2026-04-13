@@ -24,7 +24,7 @@ exports.createShop = asyncHandler(async (req, res) => {
   address = address.trim();
   description = description.trim();
   category = category.trim();
-  // ⭐ هنا ضيفه
+  // category data
   const allowedCategories = [
     "food",
     "electronics",
@@ -72,11 +72,11 @@ exports.getShops = asyncHandler(async (req, res) => {
 
 // get shop by ID
 exports.getShopById = asyncHandler(async (req, res) => {
-  // ⭐ increase views (أفضل من save)
+  // increase views 
   await Shop.findByIdAndUpdate(req.params.id, {
     $inc: { views: 1 },
   });
-  // ⭐ fetch shop بعد التحديث
+  // fetch shop بعد التحديث
   const shop = await Shop.findById(req.params.id).populate(
     "owner",
     "name username",
@@ -93,7 +93,7 @@ exports.updateShop = asyncHandler(async (req, res) => {
   if (!shop) {
     throw new AppError("The shop is not there", 404);
   }
-  // 🔒 admin only
+  //  admin only
   if (req.user.role !== "admin") {
     throw new AppError("Not authorized, admin only", 403);
   }
@@ -127,12 +127,12 @@ exports.updateShop = asyncHandler(async (req, res) => {
 
     shop.category = category;
   }
-  // 🧠 ADDRESS
+  //  ADDRESS
   if (address) {
     address = address.trim();
     shop.address = address;
   }
-  // 🧠 PHONE (نفس منطق createShop)
+  //  PHONE (نفس منطق createShop)
   if (phone) {
     phone = phone.trim();
     if (!phoneRegex.test(phone)) {
@@ -144,7 +144,7 @@ exports.updateShop = asyncHandler(async (req, res) => {
     }
     shop.phone = normalizedPhone;
   }
-  // 🧠 IMAGES (نفس فكرة normalize)
+  // IMAGES (نفس فكرة normalize)
   if (images !== undefined) {
     const imagesArray = Array.isArray(images) ? images : [images];
     shop.images = imagesArray;
