@@ -1,9 +1,8 @@
 const express = require("express");
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
 
 const {
   createProduct,
-  getShopProducts,
   getAllProducts,
   getProductById,
   updateProduct,
@@ -13,22 +12,19 @@ const {
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
 
-// 🟢 1. specific routes أول شي
-router.get("/shops/:shopId/products", getShopProducts);
-
-// 🟢 2. all products
+// 🟢 ALL PRODUCTS
 router.get("/", getAllProducts);
 
-// 🟢 3. single product (لازم يجي بعد كل شي)
+// 🟢 SINGLE PRODUCT
 router.get("/:productId", getProductById);
 
-// 🟢 create
+// 🟢 CREATE (بدنا shopId من body)
 router.post("/", protect, isAdmin, createProduct);
 
-// 🟡 update
+// 🟡 UPDATE
 router.put("/:productId", protect, isAdmin, updateProduct);
 
-// 🔴 delete
+// 🔴 DELETE
 router.delete("/:productId", protect, isAdmin, deleteProduct);
 
 module.exports = router;
