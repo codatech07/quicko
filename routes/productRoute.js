@@ -14,7 +14,7 @@ const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
 
 // 🟢 1. specific routes أول شي
-router.get("/", getShopProducts);
+router.get("/shops/:shopId/products", getShopProducts);
 
 // 🟢 2. all products
 router.get("/", getAllProducts);
