@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../middlewares/uploadMiddleware");
+
 
 const {
   createProduct,
@@ -23,7 +25,7 @@ router.get("/shop/:shopId", getShopProducts);
 router.get("/:productId", getProductById);
 
 // 🟢 CREATE PRODUCT (🔥 FIXED)
-router.post("/shop/:shopId", protect, isAdmin, createProduct);
+router.post("/shop/:shopId", protect, isAdmin, upload.array("images", 5), createProduct);
 
 // 🟡 UPDATE
 router.put("/:productId", protect, isAdmin, updateProduct);

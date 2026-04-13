@@ -19,9 +19,9 @@ exports.createProduct = asyncHandler(async (req, res) => {
   !category ||
   price == null ||
   stock == null ||
-  !images ||
   !currency ||
-  !unit
+  !unit ||!req.files ||
+  req.files.length === 0
 ) {
     throw new AppError("All required fields must be provided", 400);
   }
@@ -32,7 +32,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
   category = category.trim();
 
   // 🖼️ normalize images
-  const imagesArray = Array.isArray(images) ? images : [images];
+  // const imagesArray = Array.isArray(images) ? images : [images];
+  const imagesArray = req.files.map((file) => file.path);
 
   // 🏪 check shop exists
   const shopExists = await Shop.findById(shopId);
