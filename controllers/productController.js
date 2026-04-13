@@ -197,7 +197,7 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
 
 // get all product
 exports.getAllProducts = asyncHandler(async (req, res) => {
-  let { page, limit, sort, category, search } = req.query;
+  let { page, limit, sort, category, search, priceMin, priceMax } = req.query;
 
   page = parseInt(page) || 1;
   limit = parseInt(limit) || 10;
@@ -205,6 +205,19 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
 
   // 🧠 filter عام لكل المنتجات
   let filter = {};
+
+  // 💰 PRICE FILTER
+if (priceMin || priceMax) {
+  filter.price = {};
+
+  if (priceMin) {
+    filter.price.$gte = Number(priceMin);
+  }
+
+  if (priceMax) {
+    filter.price.$lte = Number(priceMax);
+  }
+}
 
   if (category) {
     filter.category = category;
