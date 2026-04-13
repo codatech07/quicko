@@ -51,3 +51,78 @@ exports.createProduct = asyncHandler(async (req, res) => {
 
   return successResponse(res, "Product created successfully", product, 201);
 });
+
+
+
+// get Shop Products
+exports.getShopProducts = asyncHandler(async (req, res) => {
+  const { shopId } = req.params;
+
+  let { page, limit, sort, category } = req.query;
+  // defaults
+  page = parseInt(page) || 1;
+  limit = parseInt(limit) || 14;
+  const skip = (page - 1) * limit;
+
+  // check shop exists
+  const shopExists = await Shop.findById(shopId);
+  if (!shopExists) {
+    throw new AppError("Shop not found", 404);
+  }
+
+  // filter object
+  let filter = { shop: shopId };
+
+  if (category) {
+    filter.category = category;
+  }
+
+  // sorting logic
+  let sortOption = {};
+
+  switch (sort) {
+    case "newest":
+      sortOption = { createdAt: -1 };
+      break;
+
+    case "oldest":
+      sortOption = { createdAt: 1 };
+      break;
+
+    case "price_asc":
+      sortOption = { price: 1 };
+      break;
+
+    case "price_desc":
+      sortOption = { price: -1 };
+      break;
+
+    case "best_selling":
+      sortOption = { sold: -1 };
+      break;
+
+    case "most_viewed":
+      sortOption = { views: -1 };
+      break;
+
+    default:
+      sortOption = { createdAt: -1 };
+  }
+
+  // get products
+  const products = await Product.find(filter)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit);
+
+  // total count
+  const total = await Product.countDocuments(filter);
+
+  return successResponse(res, "Products fetched successfully", {
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    results: products.length,
+    products,
+  });
+});
