@@ -6,16 +6,13 @@ const { successResponse } = require("../utils/response");
 
 // 🔥 create product
 exports.createProduct = asyncHandler(async (req, res) => {
-  let { name, description, category, price, oldPrice, stock, images, shop } =
+  let { name, description, category, price, oldPrice, stock, images } =
     req.body;
 
-  // 🛑 admin only
-  if (req.user.role !== "admin") {
-    throw new AppError("Not authorized, admin only", 403);
-  }
+  const shopId = req.params.shopId; // 🔥 من URL
 
   // 🛑 required
-  if (!name || !description || !category || !price || !images || !shop) {
+  if (!name || !description || !category || !price || !images || !stock) {
     throw new AppError("All required fields must be provided", 400);
   }
 
@@ -28,7 +25,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const imagesArray = Array.isArray(images) ? images : [images];
 
   // 🏪 check shop exists
-  const shopExists = await Shop.findById(shop);
+  const shopExists = await Shop.findById(shopId);
   if (!shopExists) {
     throw new AppError("Shop not found", 404);
   }
@@ -42,7 +39,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
     oldPrice,
     stock,
     images: imagesArray,
-    shop,
+    shop: shopId, // 🔥 تلقائي
   });
 
   return successResponse(res, "Product created successfully", product, 201);
