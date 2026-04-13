@@ -47,6 +47,19 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Stock cannot be negative"],
     },
+    currency: {
+  type: String,
+  required: true,
+  enum: ["SYP", "USD", "EUR"],
+  default: "USD",
+},
+
+unit: {
+  type: String,
+  required: true,
+  enum: ["piece", "kg", "g", "liter"],
+  default: "piece",
+},
 
     // 🖼️ الصور (لازم صورة على الأقل)
     images: {

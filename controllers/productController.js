@@ -6,7 +6,8 @@ const { successResponse } = require("../utils/response");
 
 //  create product
 exports.createProduct = asyncHandler(async (req, res) => {
-  let { name, description, category, price, oldPrice, stock, images } =
+  let { name, description, category, price, oldPrice, stock, images,currency,
+  unit } =
     req.body;
 
   const shopId = req.params.shopId; // 🔥 من URL
@@ -18,7 +19,9 @@ exports.createProduct = asyncHandler(async (req, res) => {
   !category ||
   price == null ||
   stock == null ||
-  !images
+  !images ||
+  !currency ||
+  !unit
 ) {
     throw new AppError("All required fields must be provided", 400);
   }
@@ -46,7 +49,9 @@ exports.createProduct = asyncHandler(async (req, res) => {
     oldPrice,
     stock,
     images: imagesArray,
-    shop: shopId, // 🔥 تلقائي
+    shop: shopId,
+  currency,
+  unit, // 🔥 تلقائي
   });
 
   return successResponse(res, "Product created successfully", product, 201);
@@ -149,7 +154,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     price,
     oldPrice,
     stock,
-    images,
+    images,currency, unit
   } = req.body;
 
   if (name) product.name = name.trim();
@@ -158,6 +163,8 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (price != null) product.price = price;
   if (oldPrice != null) product.oldPrice = oldPrice;
   if (stock != null) product.stock = stock;
+  if (currency) product.currency = currency;
+if (unit) product.unit = unit;
 
   if (images) {
     const imagesArray = Array.isArray(images) ? images : [images];
