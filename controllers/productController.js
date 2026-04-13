@@ -52,31 +52,24 @@ exports.createProduct = asyncHandler(async (req, res) => {
   return successResponse(res, "Product created successfully", product, 201);
 });
 
-
-
 // get Shop Products
 exports.getShopProducts = asyncHandler(async (req, res) => {
   const { shopId } = req.params;
-
   let { page, limit, sort, category } = req.query;
   // defaults
   page = parseInt(page) || 1;
   limit = parseInt(limit) || 14;
   const skip = (page - 1) * limit;
-
   // check shop exists
   const shopExists = await Shop.findById(shopId);
   if (!shopExists) {
     throw new AppError("Shop not found", 404);
   }
-
   // filter object
   let filter = { shop: shopId };
-
   if (category) {
     filter.category = category;
   }
-
   // sorting logic
   let sortOption = {};
 
@@ -108,16 +101,13 @@ exports.getShopProducts = asyncHandler(async (req, res) => {
     default:
       sortOption = { createdAt: -1 };
   }
-
   // get products
   const products = await Product.find(filter)
     .sort(sortOption)
     .skip(skip)
     .limit(limit);
-
   // total count
   const total = await Product.countDocuments(filter);
-
   return successResponse(res, "Products fetched successfully", {
     total,
     page,
@@ -125,4 +115,75 @@ exports.getShopProducts = asyncHandler(async (req, res) => {
     results: products.length,
     products,
   });
+});
+
+// get Product by id
+exports.getProductById = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+
+  const product = await Product.findById(productId).populate("shop");
+  if (!product) {
+    throw new AppError("Product not found", 404);
+  }
+
+  // 🔥 increase views
+  product.views += 1;
+  await product.save();
+
+  return successResponse(res, "Product fetched successfully", product);
+});
+
+// update product
+exports.updateProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new AppError("Product not found", 404);
+  }
+
+  let {
+    name,
+    description,
+    category,
+    price,
+    oldPrice,
+    stock,
+    images,
+  } = req.body;
+
+  if (name) product.name = name.trim();
+  if (description) product.description = description.trim();
+  if (category) product.category = category.trim();
+  if (price != null) product.price = price;
+  if (oldPrice != null) product.oldPrice = oldPrice;
+  if (stock != null) product.stock = stock;
+
+  if (images) {
+    const imagesArray = Array.isArray(images) ? images : [images];
+
+    if (!imagesArray.length || imagesArray.some((img) => !img)) {
+      throw new AppError("Invalid images", 400);
+    }
+
+    product.images = imagesArray;
+  }
+
+  await product.save();
+
+  return successResponse(res, "Product updated successfully", product);
+});
+
+// delete product
+exports.deleteProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params;
+
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new AppError("Product not found", 404);
+  }
+
+  await product.deleteOne();
+
+  return successResponse(res, "Product deleted successfully");
 });
