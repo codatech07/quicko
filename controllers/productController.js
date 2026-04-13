@@ -3,26 +3,36 @@ const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
 const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
+const User = require("../models/userModel");
 
 //  create product
 exports.createProduct = asyncHandler(async (req, res) => {
-  let { name, description, category, price, oldPrice, stock, images,currency,
-  unit } =
-    req.body;
+  let {
+    name,
+    description,
+    category,
+    price,
+    oldPrice,
+    stock,
+    images,
+    currency,
+    unit,
+  } = req.body;
 
   const shopId = req.params.shopId; // 🔥 من URL
 
   // 🛑 required
   if (
-  !name ||
-  !description ||
-  !category ||
-  price == null ||
-  stock == null ||
-  !currency ||
-  !unit ||!req.files ||
-  req.files.length === 0
-) {
+    !name ||
+    !description ||
+    !category ||
+    price == null ||
+    stock == null ||
+    !currency ||
+    !unit ||
+    !req.files ||
+    req.files.length === 0
+  ) {
     throw new AppError("All required fields must be provided", 400);
   }
 
@@ -51,8 +61,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
     stock,
     images: imagesArray,
     shop: shopId,
-  currency,
-  unit, // 🔥 تلقائي
+    currency,
+    unit, // 🔥 تلقائي
   });
 
   return successResponse(res, "Product created successfully", product, 201);
@@ -155,7 +165,9 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     price,
     oldPrice,
     stock,
-    images,currency, unit
+    images,
+    currency,
+    unit,
   } = req.body;
 
   if (name) product.name = name.trim();
@@ -165,12 +177,12 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (oldPrice != null) product.oldPrice = oldPrice;
   if (stock != null) product.stock = stock;
   if (currency) product.currency = currency;
-if (unit) product.unit = unit;
+  if (unit) product.unit = unit;
 
   if (req.files && req.files.length > 0) {
-  const imagesArray = req.files.map((file) => file.path);
-  product.images = imagesArray;
-}
+    const imagesArray = req.files.map((file) => file.path);
+    product.images = imagesArray;
+  }
   await product.save();
   return successResponse(res, "Product updated successfully", product);
 });
@@ -185,6 +197,8 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
   }
 
   await product.deleteOne();
+
+  await User.updateMany({}, { $pull: { favorites: productId } });
 
   return successResponse(res, "Product deleted successfully");
 });
@@ -201,17 +215,17 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   let filter = {};
 
   // 💰 PRICE FILTER
-if (priceMin || priceMax) {
-  filter.price = {};
+  if (priceMin || priceMax) {
+    filter.price = {};
 
-  if (priceMin) {
-    filter.price.$gte = Number(priceMin);
-  }
+    if (priceMin) {
+      filter.price.$gte = Number(priceMin);
+    }
 
-  if (priceMax) {
-    filter.price.$lte = Number(priceMax);
+    if (priceMax) {
+      filter.price.$lte = Number(priceMax);
+    }
   }
-}
 
   if (category) {
     filter.category = category;
