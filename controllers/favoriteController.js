@@ -20,19 +20,17 @@ exports.toggleFavorite = asyncHandler(async (req, res) => {
     throw new AppError("Product not found", 404);
   }
 
-  const index = user.favorites.indexOf(productId);
-
   let message;
 
-  if (index === -1) {
-    user.favorites.push(productId);
-    message = "Added to favorites";
-  } else {
-    user.favorites.splice(index, 1);
-    message = "Removed from favorites";
-  }
+if (user.favorites.some(fav => fav.toString() === productId)) {
+  user.favorites.pull(productId); // 🔥 remove
+  message = "Removed from favorites";
+} else {
+  user.favorites.addToSet(productId); // 🔥 add بدون تكرار
+  message = "Added to favorites";
+}
 
-  await user.save();
+await user.save();
 
   return successResponse(res, message, user.favorites);
 });
