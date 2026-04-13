@@ -37,7 +37,7 @@ const productSchema = new mongoose.Schema(
     // 💸 السعر القديم (اختياري)
     oldPrice: {
       type: Number,
-      default: null,
+      default: 0,
       min: [0, "old Price must be greater than 0"],
     },
 
