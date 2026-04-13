@@ -1,10 +1,11 @@
 exports.PRODUCTCATEGORIES = [
-  "food",
-  "electronics",
-  "clothes",
-  "pharmacy",
-  "mini market",
-  "other",
+  "phone",
+  "laptop",
+  "mouse",
+  "screen",
+  "t.shirt",
+  "coat",
+  "bantalon",
 ];
 
 exports.SHOPCATEGORIES = [
