@@ -7,6 +7,7 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
+  getShopProducts
 } = require("../controllers/productController");
 
 const { protect } = require("../middlewares/authMiddleware");
@@ -15,11 +16,14 @@ const { isAdmin } = require("../middlewares/adminMiddleware");
 // 🟢 ALL PRODUCTS
 router.get("/", getAllProducts);
 
+// 🟢 PRODUCTS BY SHOP
+router.get("/shop/:shopId", getShopProducts);
+
 // 🟢 SINGLE PRODUCT
 router.get("/:productId", getProductById);
 
-// 🟢 CREATE (بدنا shopId من body)
-router.post("/", protect, isAdmin, createProduct);
+// 🟢 CREATE PRODUCT (🔥 FIXED)
+router.post("/shop/:shopId", protect, isAdmin, createProduct);
 
 // 🟡 UPDATE
 router.put("/:productId", protect, isAdmin, updateProduct);
