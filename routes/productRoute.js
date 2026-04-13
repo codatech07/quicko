@@ -27,4 +27,7 @@ router.put("/:productId", protect, isAdmin, updateProduct);
 // delete product
 router.delete("/:productId", protect, isAdmin, deleteProduct);
 
+// get all product
+router.get("/", getAllProducts);
+
 module.exports = router;

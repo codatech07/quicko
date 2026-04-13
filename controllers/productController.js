@@ -187,3 +187,71 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
 
   return successResponse(res, "Product deleted successfully");
 });
+
+// get all product
+exports.getAllProducts = asyncHandler(async (req, res) => {
+  let { page, limit, sort, category, search } = req.query;
+
+  page = parseInt(page) || 1;
+  limit = parseInt(limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // 🧠 filter عام لكل المنتجات
+  let filter = {};
+
+  if (category) {
+    filter.category = category;
+  }
+
+  // 🔍 search (اسم أو وصف)
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  // 🔃 sorting
+  let sortOption = {};
+
+  switch (sort) {
+    case "newest":
+      sortOption = { createdAt: -1 };
+      break;
+
+    case "price_asc":
+      sortOption = { price: 1 };
+      break;
+
+    case "price_desc":
+      sortOption = { price: -1 };
+      break;
+
+    case "best_selling":
+      sortOption = { sold: -1 };
+      break;
+
+    case "most_viewed":
+      sortOption = { views: -1 };
+      break;
+
+    default:
+      sortOption = { createdAt: -1 };
+  }
+
+  const products = await Product.find(filter)
+    .sort(sortOption)
+    .skip(skip)
+    .limit(limit)
+    .populate("shop", "name");
+
+  const total = await Product.countDocuments(filter);
+
+  return successResponse(res, "All products fetched", {
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+    results: products.length,
+    products,
+  });
+});
