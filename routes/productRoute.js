@@ -13,35 +13,22 @@ const {
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
 
-// ========================
-// 🟢 CREATE PRODUCT
-// ========================
-router.post("/", protect, isAdmin, createProduct);
+// 🟢 1. specific routes أول شي
+router.get("/shops/:shopId/products", getShopProducts);
 
-// ========================
-// 🟢 GET ALL PRODUCTS (GLOBAL FILTER)
-// ========================
+// 🟢 2. all products
 router.get("/", getAllProducts);
 
-// ========================
-// 🟢 GET PRODUCTS OF A SHOP
-// ========================
-router.get("/shop/:shopId", getShopProducts);
-
-// ========================
-// 🟢 GET SINGLE PRODUCT
-// ========================
+// 🟢 3. single product (لازم يجي بعد كل شي)
 router.get("/:productId", getProductById);
 
-// ========================
-// 🟡 UPDATE PRODUCT
-// ========================
+// 🟢 create
+router.post("/", protect, isAdmin, createProduct);
+
+// 🟡 update
 router.put("/:productId", protect, isAdmin, updateProduct);
 
-// ========================
-// 🔴 DELETE PRODUCT
-// ========================
+// 🔴 delete
 router.delete("/:productId", protect, isAdmin, deleteProduct);
-
 
 module.exports = router;
