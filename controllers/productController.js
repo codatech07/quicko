@@ -167,18 +167,11 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (currency) product.currency = currency;
 if (unit) product.unit = unit;
 
-  if (images) {
-    const imagesArray = Array.isArray(images) ? images : [images];
-
-    if (!imagesArray.length || imagesArray.some((img) => !img)) {
-      throw new AppError("Invalid images", 400);
-    }
-
-    product.images = imagesArray;
-  }
-
+  if (req.files && req.files.length > 0) {
+  const imagesArray = req.files.map((file) => file.path);
+  product.images = imagesArray;
+}
   await product.save();
-
   return successResponse(res, "Product updated successfully", product);
 });
 

@@ -28,7 +28,7 @@ router.get("/:productId", getProductById);
 router.post("/shop/:shopId", protect, isAdmin, upload.array("images", 5), createProduct);
 
 // 🟡 UPDATE
-router.put("/:productId", protect, isAdmin, updateProduct);
+router.put("/:productId", protect, isAdmin, upload.array("images", 5), updateProduct);
 
 // 🔴 DELETE
 router.delete("/:productId", protect, isAdmin, deleteProduct);
