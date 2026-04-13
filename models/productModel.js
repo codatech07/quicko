@@ -1,25 +1,24 @@
 const mongoose = require("mongoose");
 const {
   PRODUCTCATEGORIES,
+  PRODUCTCURRENCY,
+  PRODUCTUNIT,
 } = require("../utils/validators/constantsShopProduct");
 
 const productSchema = new mongoose.Schema(
   {
-    // 🧾 الاسم
     name: {
       type: String,
       required: [true, "Product name required"],
       trim: true,
     },
 
-    // 📝 الوصف
     description: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 🏷️ التصنيف (للفلترة)
     category: {
       type: String,
       required: true,
@@ -27,21 +26,18 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // 💰 السعر الحالي
     price: {
       type: Number,
       required: true,
       min: [0, "Price must be greater than 0"],
     },
 
-    // 💸 السعر القديم (اختياري)
     oldPrice: {
       type: Number,
       default: 0,
       min: [0, "old Price must be greater than 0"],
     },
 
-    // 📦 الكمية
     stock: {
       type: Number,
       default: 0,
@@ -50,15 +46,15 @@ const productSchema = new mongoose.Schema(
     currency: {
   type: String,
   required: true,
-  enum: ["SYP", "USD", "EUR"],
-  default: "USD",
+  enum: PRODUCTCURRENCY,
+  trim: true,
 },
 
 unit: {
   type: String,
   required: true,
-  enum: ["piece", "kg", "g", "liter"],
-  default: "piece",
+  enum: PRODUCTUNIT,
+  trim: true,
 },
 
     // 🖼️ الصور (لازم صورة على الأقل)

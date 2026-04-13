@@ -15,3 +15,10 @@ exports.SHOPCATEGORIES = [
   "mini market",
   "other",
 ];
+exports.PRODUCTCURRENCY = [
+  "SYP", "USD", "EUR",
+];
+exports.PRODUCTUNIT = [
+  "piece", "kg", "g", "liter"
+];
+
