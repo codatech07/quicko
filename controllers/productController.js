@@ -4,7 +4,7 @@ const asyncHandler = require("express-async-handler");
 const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
 
-// 🔥 create product
+//  create product
 exports.createProduct = asyncHandler(async (req, res) => {
   let { name, description, category, price, oldPrice, stock, images } =
     req.body;
