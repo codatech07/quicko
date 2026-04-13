@@ -9,7 +9,7 @@ const {
 
 // create shop only admin
 exports.createShop = asyncHandler(async (req, res) => {
-  let { name, description, images, phone, address, category } = req.body;
+  let { name, description, phone, address, category } = req.body;
   // admin check
   if (req.user.role !== "admin") {
     throw new AppError("Not authorized, admin only", 403);
@@ -18,6 +18,7 @@ exports.createShop = asyncHandler(async (req, res) => {
   if (!name || !phone || !address || !category || !description) {
     throw new AppError("All fields required", 400);
   }
+
   // 2. trim
   name = name.trim();
   phone = phone.trim();
@@ -37,7 +38,9 @@ exports.createShop = asyncHandler(async (req, res) => {
     throw new AppError("Invalid category", 400);
   }
   // 3. images normalize
-  const imagesArray = images ? (Array.isArray(images) ? images : [images]) : [];
+  const imagesArray = req.files
+  ? req.files.map((file) => file.path)
+  : [];
   // 4. phone validation
   if (!phoneRegex.test(phone)) {
     throw new AppError("Invalid phone format", 400);
@@ -97,7 +100,7 @@ exports.updateShop = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {
     throw new AppError("Not authorized, admin only", 403);
   }
-  let { name, description, images, phone, address, category } = req.body;
+  let { name, description, phone, address, category } = req.body;
   // 🧠 NAME
   if (name) {
     name = name.trim();
@@ -145,10 +148,10 @@ exports.updateShop = asyncHandler(async (req, res) => {
     shop.phone = normalizedPhone;
   }
   // IMAGES (نفس فكرة normalize)
-  if (images !== undefined) {
-    const imagesArray = Array.isArray(images) ? images : [images];
-    shop.images = imagesArray;
-  }
+  if (req.files && req.files.length > 0) {
+  const imagesArray = req.files.map((file) => file.path);
+  shop.images = imagesArray;
+}
   await shop.save();
   return successResponse(res, "Shop updated successfully", shop);
 });
