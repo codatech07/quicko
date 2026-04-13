@@ -2,6 +2,8 @@ const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
 const { successResponse, successDeleteResponse } = require("../utils/response");
 const AppError = require("../utils/AppError");
+const { SHOPCATEGORIES } = require("../utils/validators/constantsShopProduct");
+
 const {
   phoneRegex,
   normalizePhone,
@@ -26,21 +28,11 @@ exports.createShop = asyncHandler(async (req, res) => {
   description = description.trim();
   category = category.trim();
   // category data
-  const allowedCategories = [
-    "food",
-    "electronics",
-    "clothes",
-    "pharmacy",
-    "mini market",
-    "other",
-  ];
-  if (!allowedCategories.includes(category)) {
+  if (category && !SHOPCATEGORIES.includes(category)) {
     throw new AppError("Invalid category", 400);
   }
   // 3. images normalize
-  const imagesArray = req.files
-  ? req.files.map((file) => file.path)
-  : [];
+  const imagesArray = req.files ? req.files.map((file) => file.path) : [];
   // 4. phone validation
   if (!phoneRegex.test(phone)) {
     throw new AppError("Invalid phone format", 400);
@@ -75,7 +67,7 @@ exports.getShops = asyncHandler(async (req, res) => {
 
 // get shop by ID
 exports.getShopById = asyncHandler(async (req, res) => {
-  // increase views 
+  // increase views
   await Shop.findByIdAndUpdate(req.params.id, {
     $inc: { views: 1 },
   });
@@ -115,19 +107,9 @@ exports.updateShop = asyncHandler(async (req, res) => {
   if (category) {
     category = category.trim();
 
-    const allowedCategories = [
-      "food",
-      "electronics",
-      "clothes",
-      "pharmacy",
-      "mini market",
-      "other",
-    ];
-
-    if (!allowedCategories.includes(category)) {
+    if (category && !SHOPCATEGORIES.includes(category)) {
       throw new AppError("Invalid category", 400);
     }
-
     shop.category = category;
   }
   //  ADDRESS
@@ -149,9 +131,9 @@ exports.updateShop = asyncHandler(async (req, res) => {
   }
   // IMAGES (نفس فكرة normalize)
   if (req.files && req.files.length > 0) {
-  const imagesArray = req.files.map((file) => file.path);
-  shop.images = imagesArray;
-}
+    const imagesArray = req.files.map((file) => file.path);
+    shop.images = imagesArray;
+  }
   await shop.save();
   return successResponse(res, "Shop updated successfully", shop);
 });
