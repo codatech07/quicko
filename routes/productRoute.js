@@ -4,6 +4,7 @@ const router = express.Router({ mergeParams: true });
 const {
   createProduct,
   getShopProducts,
+  getAllProducts,
   getProductById,
   updateProduct,
   deleteProduct,
@@ -12,22 +13,41 @@ const {
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
 
-// create product
+
+// ========================
+// 🟢 CREATE PRODUCT
+// ========================
 router.post("/", protect, isAdmin, createProduct);
 
-// get all products of shop
-router.get("/", getShopProducts);
 
-// get product by id
+// ========================
+// 🟢 GET ALL PRODUCTS (GLOBAL FILTER)
+// ========================
+router.get("/", getAllProducts);
+
+
+// ========================
+// 🟢 GET PRODUCTS OF A SHOP
+// ========================
+router.get("/shop/:shopId", getShopProducts);
+
+
+// ========================
+// 🟢 GET SINGLE PRODUCT
+// ========================
 router.get("/:productId", getProductById);
 
-// update product
+
+// ========================
+// 🟡 UPDATE PRODUCT
+// ========================
 router.put("/:productId", protect, isAdmin, updateProduct);
 
-// delete product
+
+// ========================
+// 🔴 DELETE PRODUCT
+// ========================
 router.delete("/:productId", protect, isAdmin, deleteProduct);
 
-// get all product
-router.get("/", getAllProducts);
 
 module.exports = router;
