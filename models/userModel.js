@@ -44,6 +44,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    favorites: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    default: [],
+  },
+],
     emailVerificationOTP: String,
     emailVerificationExpire: Date,
   },

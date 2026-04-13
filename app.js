@@ -12,6 +12,8 @@ app.use("/api/users", require("./routes/userRoute"));
 app.use("/api/shops", require("./routes/shopRoute"));
 // product
 app.use("/api/products", require("./routes/productRoute"));
+// favorites
+app.use("/api/favorites", require("./routes/favoriteRoute"));
 // route not found handler
 const AppError = require("./utils/AppError");
 
