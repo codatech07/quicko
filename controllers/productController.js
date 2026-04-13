@@ -12,7 +12,14 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const shopId = req.params.shopId; // 🔥 من URL
 
   // 🛑 required
-  if (!name || !description || !category || !price || !images || !stock) {
+  if (
+  !name ||
+  !description ||
+  !category ||
+  price == null ||
+  stock == null ||
+  !images
+) {
     throw new AppError("All required fields must be provided", 400);
   }
 
