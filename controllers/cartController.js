@@ -211,3 +211,33 @@ exports.getCart = asyncHandler(async (req, res) => {
     updatedAt: cart.updatedAt,
   });
 });
+
+// =========================
+// EMPTY CART (clear all items)
+// =========================
+exports.clearCart = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const cart = await Cart.findOne({ user: userId });
+
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  // تفريغ كل العناصر
+  cart.items = [];
+
+  // إعادة حساب التوتال
+  cart.totalPrice = 0;
+
+  await cart.save();
+
+  return successResponse(res, "Cart cleared successfully", {
+    _id: cart._id,
+    user: cart.user,
+    items: [],
+    totalPrice: 0,
+    createdAt: cart.createdAt,
+    updatedAt: cart.updatedAt,
+  });
+});
