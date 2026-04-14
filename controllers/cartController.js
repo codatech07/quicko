@@ -175,3 +175,22 @@ exports.updateCartItem = asyncHandler(async (req, res) => {
 
   return successResponse(res, "Cart updated", cart);
 });
+
+
+
+// get user cart
+exports.getCart = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const cart = await Cart.findOne({ user: userId }).populate({
+    path: "items.product",
+    select: "name price image stock",
+  });
+  // 🆕 إذا ما في كارت
+  if (!cart) {
+    return successResponse(res, "Cart is empty", {
+      items: [],
+      totalPrice: 0,
+    });
+  }
+  return successResponse(res, "Cart fetched successfully", cart);
+});
