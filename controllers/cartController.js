@@ -7,62 +7,63 @@ const { successResponse } = require("../utils/response");
 exports.addToCart = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { productId } = req.params;
-  let { quantity } = req.body;
 
-  // 🧠 default quantity
-  if (!quantity) quantity = 1;
-  quantity = Number(quantity);
+  // ✅ أهم سطر (حل مشكلتك كلها)
+  const quantity = Number(req.body?.quantity) || 1;
 
   if (quantity <= 0) {
-    throw new AppError("Quantity must be >= 1", 400);
+    throw new AppError("Quantity must be at least 1", 400);
   }
 
-  // 🔍 check product
+  // 🔍 تأكد المنتج موجود
   const product = await Product.findById(productId);
   if (!product) {
     throw new AppError("Product not found", 404);
   }
 
-  // 🛒 get or create cart
+  // 🛒 جيب الكارت
   let cart = await Cart.findOne({ user: userId });
 
+  // 🆕 إذا ما في كارت → أنشئ
   if (!cart) {
     cart = await Cart.create({
       user: userId,
       items: [
         {
           product: productId,
-          quantity,
+          quantity: quantity,
           price: product.price,
         },
       ],
       totalPrice: product.price * quantity,
     });
 
-    return successResponse(res, "Cart created", cart);
+    return successResponse(res, "Cart created & product added", cart);
   }
 
-  // 🔁 check product exists
+  // 🔁 شوف إذا المنتج موجود بالكارت
   const item = cart.items.find(
     (i) => i.product.toString() === productId
   );
 
   if (item) {
+    // ➕ زيد الكمية
     item.quantity += quantity;
   } else {
+    // 🆕 أضف المنتج
     cart.items.push({
       product: productId,
-      quantity,
+      quantity: quantity,
       price: product.price,
     });
   }
 
-  // 💰 update total
-  cart.totalPrice = cart.items.reduce((sum, i) => {
-    return sum + i.price * i.quantity;
+  // 💰 حساب السعر الكلي
+  cart.totalPrice = cart.items.reduce((total, item) => {
+    return total + item.price * item.quantity;
   }, 0);
 
   await cart.save();
 
-  return successResponse(res, "Added to cart", cart);
+  return successResponse(res, "Product added to cart", cart);
 });
