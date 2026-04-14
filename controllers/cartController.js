@@ -4,48 +4,65 @@ const Product = require("../models/productModel");
 const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
 
-
-
-
-// ➕ Add to cart (STEP 1 فقط)
 exports.addToCart = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { productId } = req.params;
-  const { quantity = 1 } = req.body;
-  // 1. تأكد المنتج موجود
+  let { quantity } = req.body;
+
+  // 🧠 default quantity
+  if (!quantity) quantity = 1;
+  quantity = Number(quantity);
+
+  if (quantity <= 0) {
+    throw new AppError("Quantity must be >= 1", 400);
+  }
+
+  // 🔍 check product
   const product = await Product.findById(productId);
   if (!product) {
     throw new AppError("Product not found", 404);
   }
-  // 2. جيب الكارت أو أنشئ واحد
+
+  // 🛒 get or create cart
   let cart = await Cart.findOne({ user: userId });
+
   if (!cart) {
     cart = await Cart.create({
       user: userId,
-      items: [],
-      totalPrice: 0,
+      items: [
+        {
+          product: productId,
+          quantity,
+          price: product.price,
+        },
+      ],
+      totalPrice: product.price * quantity,
     });
+
+    return successResponse(res, "Cart created", cart);
   }
-  // 3. هل المنتج موجود بالكارت؟
-  const itemIndex = cart.items.findIndex(
-    (item) => item.product.toString() === productId
+
+  // 🔁 check product exists
+  const item = cart.items.find(
+    (i) => i.product.toString() === productId
   );
-  if (itemIndex > -1) {
-    // إذا موجود → زيد الكمية فقط
-    cart.items[itemIndex].quantity += quantity;
+
+  if (item) {
+    item.quantity += quantity;
   } else {
-    // إذا جديد → ضيفه
     cart.items.push({
       product: productId,
       quantity,
       price: product.price,
     });
   }
-  // 4. احسب totalPrice
-  cart.totalPrice = cart.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+
+  // 💰 update total
+  cart.totalPrice = cart.items.reduce((sum, i) => {
+    return sum + i.price * i.quantity;
+  }, 0);
+
   await cart.save();
+
   return successResponse(res, "Added to cart", cart);
 });
