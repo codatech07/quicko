@@ -4,6 +4,8 @@ const asyncHandler = require("express-async-handler");
 const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
 const attachFavorite = require("../utils/attachFavorite");
+const User = require("../models/userModel");
+
 
 
 
@@ -186,9 +188,12 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
   if (!product) {
     throw new AppError("Product not found", 404);
   }
-
+   // 🔥 احذف المنتج من favorites عند كل المستخدمين
+  await User.updateMany(
+    { favorites: productId },
+    { $pull: { favorites: productId } }
+  );
   await product.deleteOne();
-
   return successResponse(res, "Product deleted successfully");
 });
 

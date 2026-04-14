@@ -22,11 +22,11 @@ exports.toggleFavorite = asyncHandler(async (req, res) => {
 
   let message;
 
-if (user.favorites.some(fav => fav.toString() === productId)) {
-  user.favorites.pull(productId); // 🔥 remove
+if (user.favorites.some(fav => fav.equals(productId))) {
+  user.favorites.pull(productId);
   message = "Removed from favorites";
 } else {
-  user.favorites.addToSet(productId); // 🔥 add بدون تكرار
+  user.favorites.addToSet(productId);
   message = "Added to favorites";
 }
 
@@ -43,5 +43,7 @@ exports.getFavorites = asyncHandler(async (req, res) => {
     throw new AppError("User not found", 404);
   }
 
-  return successResponse(res, "Favorites fetched", user.favorites);
+  const validFavorites = user.favorites.filter(p => p !== null);
+
+  return successResponse(res, "Favorites fetched", validFavorites);
 });
