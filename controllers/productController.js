@@ -124,12 +124,30 @@ exports.getShopProducts = asyncHandler(async (req, res) => {
     .limit(limit);
   // total count
   const total = await Product.countDocuments(filter);
+  let productsWithFavorite;
+
+if (!req.user) {
+  productsWithFavorite = products.map((product) => ({
+    ...product.toObject(),
+    isFavorite: null,
+  }));
+} else {
+  const userFavorites = req.user.favorites.map((id) =>
+    id.toString()
+  );
+
+  productsWithFavorite = products.map((product) => ({
+    ...product.toObject(),
+    isFavorite: userFavorites.includes(product._id.toString()),
+  }));
+}
+
   return successResponse(res, "Products fetched successfully", {
     total,
     page,
     pages: Math.ceil(total / limit),
     results: products.length,
-    products,
+    products:productsWithFavorite,
   });
 });
 
@@ -138,15 +156,28 @@ exports.getProductById = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
   const product = await Product.findById(productId).populate("shop");
+
   if (!product) {
     throw new AppError("Product not found", 404);
   }
 
-  // 🔥 increase views
+  // 👁️ views
   product.views += 1;
   await product.save();
 
-  return successResponse(res, "Product fetched successfully", product);
+  // 🔥 FAVORITE
+  let isFavorite = null;
+
+  if (req.user) {
+    isFavorite = req.user.favorites.some(
+      (fav) => fav.toString() === product._id.toString()
+    );
+  }
+
+  return successResponse(res, "Product fetched successfully", {
+    ...product.toObject(),
+    isFavorite,
+  });
 });
 
 // update product
@@ -274,6 +305,26 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     .populate("shop", "name");
 
   const total = await Product.countDocuments(filter);
+  // 🔥 FAVORITE LOGIC
+  let productsWithFavorite;
+  if (!req.user) {
+    // 👤 Guest
+    productsWithFavorite = products.map((product) => ({
+      ...product.toObject(),
+      isFavorite: null,
+    }));
+  } else {
+    const userFavorites = req.user.favorites.map((id) =>
+      id.toString()
+    );
+    productsWithFavorite = products.map((product) => ({
+      ...product.toObject(),
+      isFavorite: userFavorites.includes(product._id.toString()),
+    }));
+  }
+  // end favorit
+
+
 
   return successResponse(res, "All products fetched", {
     total,
