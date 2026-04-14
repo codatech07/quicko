@@ -183,7 +183,8 @@ exports.getCart = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const cart = await Cart.findOne({ user: userId }).populate({
     path: "items.product",
-    select: "name price image stock",
+    // ıf you wont to select from product you can add select
+    // select: "name description category price image stock",
   });
   // 🆕 إذا ما في كارت
   if (!cart) {
