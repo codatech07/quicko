@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const upload = require("../middlewares/uploadMiddleware");
-const { optionalAuth } = require("../middlewares/optionalAuth");
 
 
 const {
@@ -17,13 +16,13 @@ const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
 
 // 🟢 ALL PRODUCTS
-router.get("/",optionalAuth, getAllProducts);
+router.get("/", getAllProducts);
 
 // 🟢 PRODUCTS BY SHOP
-router.get("/shop/:shopId",optionalAuth, getShopProducts);
+router.get("/shop/:shopId", getShopProducts);
 
 // 🟢 SINGLE PRODUCT
-router.get("/:productId",optionalAuth, getProductById);
+router.get("/:productId", getProductById);
 
 // 🟢 CREATE PRODUCT (🔥 FIXED)
 router.post("/shop/:shopId", protect, isAdmin, upload.array("images", 5), createProduct);

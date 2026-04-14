@@ -3,36 +3,26 @@ const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
 const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
-const User = require("../models/userModel");
 
 //  create product
 exports.createProduct = asyncHandler(async (req, res) => {
-  let {
-    name,
-    description,
-    category,
-    price,
-    oldPrice,
-    stock,
-    images,
-    currency,
-    unit,
-  } = req.body;
+  let { name, description, category, price, oldPrice, stock, images,currency,
+  unit } =
+    req.body;
 
   const shopId = req.params.shopId; // 🔥 من URL
 
   // 🛑 required
   if (
-    !name ||
-    !description ||
-    !category ||
-    price == null ||
-    stock == null ||
-    !currency ||
-    !unit ||
-    !req.files ||
-    req.files.length === 0
-  ) {
+  !name ||
+  !description ||
+  !category ||
+  price == null ||
+  stock == null ||
+  !currency ||
+  !unit ||!req.files ||
+  req.files.length === 0
+) {
     throw new AppError("All required fields must be provided", 400);
   }
 
@@ -61,8 +51,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
     stock,
     images: imagesArray,
     shop: shopId,
-    currency,
-    unit, // 🔥 تلقائي
+  currency,
+  unit, // 🔥 تلقائي
   });
 
   return successResponse(res, "Product created successfully", product, 201);
@@ -124,30 +114,12 @@ exports.getShopProducts = asyncHandler(async (req, res) => {
     .limit(limit);
   // total count
   const total = await Product.countDocuments(filter);
-  let productsWithFavorite;
-
-if (!req.user) {
-  productsWithFavorite = products.map((product) => ({
-    ...product.toObject(),
-    isFavorite: null,
-  }));
-} else {
-  const userFavorites = req.user.favorites.map((id) =>
-    id.toString()
-  );
-
-  productsWithFavorite = products.map((product) => ({
-    ...product.toObject(),
-    isFavorite: userFavorites.includes(product._id.toString()),
-  }));
-}
-
   return successResponse(res, "Products fetched successfully", {
     total,
     page,
     pages: Math.ceil(total / limit),
     results: products.length,
-    products:productsWithFavorite,
+    products,
   });
 });
 
@@ -156,28 +128,15 @@ exports.getProductById = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
   const product = await Product.findById(productId).populate("shop");
-
   if (!product) {
     throw new AppError("Product not found", 404);
   }
 
-  // 👁️ views
+  // 🔥 increase views
   product.views += 1;
   await product.save();
 
-  // 🔥 FAVORITE
-  let isFavorite = null;
-
-  if (req.user) {
-    isFavorite = req.user.favorites.some(
-      (fav) => fav.toString() === product._id.toString()
-    );
-  }
-
-  return successResponse(res, "Product fetched successfully", {
-    ...product.toObject(),
-    isFavorite,
-  });
+  return successResponse(res, "Product fetched successfully", product);
 });
 
 // update product
@@ -196,9 +155,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     price,
     oldPrice,
     stock,
-    images,
-    currency,
-    unit,
+    images,currency, unit
   } = req.body;
 
   if (name) product.name = name.trim();
@@ -208,12 +165,12 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (oldPrice != null) product.oldPrice = oldPrice;
   if (stock != null) product.stock = stock;
   if (currency) product.currency = currency;
-  if (unit) product.unit = unit;
+if (unit) product.unit = unit;
 
   if (req.files && req.files.length > 0) {
-    const imagesArray = req.files.map((file) => file.path);
-    product.images = imagesArray;
-  }
+  const imagesArray = req.files.map((file) => file.path);
+  product.images = imagesArray;
+}
   await product.save();
   return successResponse(res, "Product updated successfully", product);
 });
@@ -228,8 +185,6 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
   }
 
   await product.deleteOne();
-
-  await User.updateMany({}, { $pull: { favorites: productId } });
 
   return successResponse(res, "Product deleted successfully");
 });
@@ -246,17 +201,17 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
   let filter = {};
 
   // 💰 PRICE FILTER
-  if (priceMin || priceMax) {
-    filter.price = {};
+if (priceMin || priceMax) {
+  filter.price = {};
 
-    if (priceMin) {
-      filter.price.$gte = Number(priceMin);
-    }
-
-    if (priceMax) {
-      filter.price.$lte = Number(priceMax);
-    }
+  if (priceMin) {
+    filter.price.$gte = Number(priceMin);
   }
+
+  if (priceMax) {
+    filter.price.$lte = Number(priceMax);
+  }
+}
 
   if (category) {
     filter.category = category;
@@ -305,26 +260,6 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     .populate("shop", "name");
 
   const total = await Product.countDocuments(filter);
-  // 🔥 FAVORITE LOGIC
-  let productsWithFavorite;
-  if (!req.user) {
-    // 👤 Guest
-    productsWithFavorite = products.map((product) => ({
-      ...product.toObject(),
-      isFavorite: null,
-    }));
-  } else {
-    const userFavorites = req.user.favorites.map((id) =>
-      id.toString()
-    );
-    productsWithFavorite = products.map((product) => ({
-      ...product.toObject(),
-      isFavorite: userFavorites.includes(product._id.toString()),
-    }));
-  }
-  // end favorit
-
-
 
   return successResponse(res, "All products fetched", {
     total,
