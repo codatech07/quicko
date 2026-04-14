@@ -118,3 +118,60 @@ exports.removeFromCart = asyncHandler(async (req, res) => {
 
   return successResponse(res, "Product removed from cart", cart);
 });
+
+// update product quantity in cart
+exports.updateCartItem = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { productId } = req.params;
+  const { quantity } = req.body;
+
+  // ❌ لازم المستخدم يبعث quantity
+  if (quantity === undefined) {
+    throw new AppError("Quantity is required", 400);
+  }
+
+  if (quantity < 0) {
+    throw new AppError("Quantity cannot be negative", 400);
+  }
+
+  const cart = await Cart.findOne({ user: userId });
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new AppError("Product not found", 404);
+  }
+
+  const item = cart.items.find(
+    (i) => i.product.toString() === productId
+  );
+
+  if (!item) {
+    throw new AppError("Product not in cart", 404);
+  }
+
+  // ❌ إذا صفر نحذف
+  if (quantity === 0) {
+    cart.items = cart.items.filter(
+      (i) => i.product.toString() !== productId
+    );
+  } else {
+    // ❌ تحقق من الستوك
+    if (quantity > product.stock) {
+      throw new AppError("Quantity exceeds stock", 400);
+    }
+
+    item.quantity = quantity;
+  }
+
+  // 💰 إعادة الحساب
+  cart.totalPrice = cart.items.reduce((total, item) => {
+    return total + item.price * item.quantity;
+  }, 0);
+
+  await cart.save();
+
+  return successResponse(res, "Cart updated", cart);
+});

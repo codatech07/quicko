@@ -8,5 +8,7 @@ const { protect } = require("../middlewares/authMiddleware");
 router.post("/:productId", protect, addToCart);
 // remove from card
 router.delete("/:productId", protect, removeFromCart);
+// update product ın card 
+router.patch("/:productId", protect, updateCartItem);
 
 module.exports = router;
