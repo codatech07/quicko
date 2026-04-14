@@ -14,15 +14,17 @@ const {
 
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
+const { optionalAuth } = require("../middlewares/authMiddleware");
+
 
 // 🟢 ALL PRODUCTS
-router.get("/", getAllProducts);
+router.get("/",optionalAuth, getAllProducts);
 
 // 🟢 PRODUCTS BY SHOP
 router.get("/shop/:shopId", getShopProducts);
 
 // 🟢 SINGLE PRODUCT
-router.get("/:productId", getProductById);
+router.get("/:productId",optionalAuth, getProductById);
 
 // 🟢 CREATE PRODUCT (🔥 FIXED)
 router.post("/shop/:shopId", protect, isAdmin, upload.array("images", 5), createProduct);

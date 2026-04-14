@@ -3,6 +3,9 @@ const Shop = require("../models/shopModel");
 const asyncHandler = require("express-async-handler");
 const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
+const attachFavorite = require("../utils/attachFavorite");
+
+
 
 //  create product
 exports.createProduct = asyncHandler(async (req, res) => {
@@ -191,6 +194,8 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
 
 // get all product
 exports.getAllProducts = asyncHandler(async (req, res) => {
+  //11111
+  const userId = req.user?.id
   let { page, limit, sort, category, search, priceMin, priceMax } = req.query;
 
   page = parseInt(page) || 1;
@@ -260,12 +265,15 @@ if (priceMin || priceMax) {
     .populate("shop", "name");
 
   const total = await Product.countDocuments(filter);
+  //22222
+    const productsWithFavorite = await attachFavorite(userId, products);
+
 
   return successResponse(res, "All products fetched", {
     total,
     page,
     pages: Math.ceil(total / limit),
     results: products.length,
-    products,
+    products: productsWithFavorite,
   });
 });
