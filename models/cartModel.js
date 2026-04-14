@@ -11,10 +11,6 @@ const cartItemSchema = new mongoose.Schema({
     default: 1,
     min: 1,
   },
-  price: {
-    type: Number,
-    required: true, // 🔥 نخزن السعر وقت الإضافة
-  },
 });
 
 const cartSchema = new mongoose.Schema(
