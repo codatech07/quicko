@@ -83,3 +83,38 @@ exports.addToCart = asyncHandler(async (req, res) => {
 
   return successResponse(res, "Product added to cart", cart);
 });
+
+
+// delete product from card 
+exports.removeFromCart = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { productId } = req.params;
+
+  // 🛒 جيب الكارت
+  const cart = await Cart.findOne({ user: userId });
+
+  if (!cart) {
+    throw new AppError("Cart not found", 404);
+  }
+
+  // 🔍 تحقق إذا المنتج موجود
+  const itemIndex = cart.items.findIndex(
+    (item) => item.product.toString() === productId
+  );
+
+  if (itemIndex === -1) {
+    throw new AppError("Product not in cart", 404);
+  }
+
+  // ❌ حذف المنتج
+  cart.items.splice(itemIndex, 1);
+
+  // 💰 إعادة حساب السعر
+  cart.totalPrice = cart.items.reduce((total, item) => {
+    return total + item.price * item.quantity;
+  }, 0);
+
+  await cart.save();
+
+  return successResponse(res, "Product removed from cart", cart);
+});
