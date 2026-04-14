@@ -128,17 +128,15 @@ exports.getProductById = asyncHandler(async (req, res) => {
   const { productId } = req.params;
   const userId = req.user?.id || null;
 
-  const product = await Product.findById(productId).populate("shop");
+  let product = await Product.findById(productId).populate("shop");
 
   if (!product) {
     throw new AppError("Product not found", 404);
   }
 
-  // increase views
   product.views += 1;
   await product.save();
 
-  // attach favorite AFTER fetching product
   const productWithFavorite = await attachFavorite(userId, product);
 
   return successResponse(res, "Product fetched successfully", productWithFavorite);
