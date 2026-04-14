@@ -21,7 +21,7 @@ const { optionalAuth } = require("../middlewares/optionalauthMiddleware");
 router.get("/",optionalAuth, getAllProducts);
 
 // 🟢 PRODUCTS BY SHOP
-router.get("/shop/:shopId", getShopProducts);
+router.get("/shop/:shopId",optionalAuth, getShopProducts);
 
 // 🟢 SINGLE PRODUCT
 router.get("/:productId",optionalAuth, getProductById);
