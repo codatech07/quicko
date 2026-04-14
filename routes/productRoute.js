@@ -14,7 +14,7 @@ const {
 
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
-const { optionalAuth } = require("../middlewares/authMiddleware");
+const { optionalAuth } = require("../middlewares/optionalauthMiddleware");
 
 
 // 🟢 ALL PRODUCTS
