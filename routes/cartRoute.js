@@ -17,7 +17,6 @@ router.delete("/:productId", protect, removeFromCart);
 router.patch("/:productId", protect, updateCartItem);
 // get user cart
 router.get("/", protect, getCart);
-// empıty the card
-router.delete("/cart", protect, clearCart);
+router.delete("/", protect, clearCart);
 
 module.exports = router;
