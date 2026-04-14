@@ -1,3 +1,4 @@
+const asyncHandler = require("express-async-handler");
 exports.optionalAuth = asyncHandler(async (req, res, next) => {
   let token;
 
