@@ -13,48 +13,47 @@ exports.addToCart = asyncHandler(async (req, res) => {
   if (quantity <= 0) {
     throw new AppError("Quantity must be at least 1", 400);
   }
+
   const product = await Product.findById(productId);
-  if (!product) {
-    throw new AppError("Product not found", 404);
-  }
+  if (!product) throw new AppError("Product not found", 404);
+
   if (product.stock === 0) {
     throw new AppError("Product is out of stock", 400);
   }
+
   let cart = await Cart.findOne({ user: userId });
+
   if (!cart) {
     if (quantity > product.stock) {
-      throw new AppError("Not enough stock available", 400);
+      throw new AppError("Not enough stock", 400);
     }
+
     cart = await Cart.create({
       user: userId,
-      items: [
-        {
-          product: productId,
-          quantity,
-        },
-      ],
+      items: [{ product: productId, quantity }],
     });
-    return successResponse(res, "Cart created & product added", cart);
+
+    return successResponse(res, "Cart created", cart);
   }
-  const item = cart.items.find(
-    (i) => i.product.toString() === productId
-  );
+
+  const item = cart.items.find(i => i.product.toString() === productId);
+
   if (item) {
-    const newQuantity = item.quantity + quantity;
-    if (newQuantity > product.stock) {
-      throw new AppError("Quantity exceeds available stock", 400);
+    const newQty = item.quantity + quantity;
+    if (newQty > product.stock) {
+      throw new AppError("Not enough stock", 400);
     }
-    item.quantity = newQuantity;
+    item.quantity = newQty;
   } else {
     if (quantity > product.stock) {
-      throw new AppError("Not enough stock available", 400);
+      throw new AppError("Not enough stock", 400);
     }
-    cart.items.push({
-      product: productId,
-      quantity,
-    });
+
+    cart.items.push({ product: productId, quantity });
   }
+
   await cart.save();
+
   return successResponse(res, "Product added to cart", cart);
 });
 
@@ -160,21 +159,51 @@ exports.updateCartItem = asyncHandler(async (req, res) => {
 // });
 
 
+// exports.getCart = asyncHandler(async (req, res) => {
+//   const userId = req.user.id;
+//   const cart = await Cart.findOne({ user: userId }).populate("items.product");
+//   if (!cart) {
+//     return successResponse(res, "Cart is empty", {
+//       items: [],
+//       totalPrice: 0,
+//     });
+//   }
+//   // 💥 LIVE PRICE (من المنتج مباشرة)
+//   const totalPrice = cart.items.reduce((total, item) => {
+//     return total + item.product.price * item.quantity;
+//   }, 0);
+//   return successResponse(res, "Cart fetched successfully", {
+//     ...cart.toObject(),
+//     totalPrice,
+//   });
+// });
 exports.getCart = asyncHandler(async (req, res) => {
   const userId = req.user.id;
+
   const cart = await Cart.findOne({ user: userId }).populate("items.product");
+
   if (!cart) {
     return successResponse(res, "Cart is empty", {
       items: [],
       totalPrice: 0,
     });
   }
-  // 💥 LIVE PRICE (من المنتج مباشرة)
-  const totalPrice = cart.items.reduce((total, item) => {
-    return total + item.product.price * item.quantity;
-  }, 0);
+
+  const items = cart.items.map(item => {
+    return {
+      product: item.product,
+      quantity: item.quantity,
+      subtotal: item.quantity * item.product.price, // 🔥 ديناميكي
+    };
+  });
+
+  const totalPrice = items.reduce((t, i) => t + i.subtotal, 0);
+
   return successResponse(res, "Cart fetched successfully", {
-    ...cart.toObject(),
+    _id: cart._id,
+    user: cart.user,
+    items,
     totalPrice,
+    updatedAt: cart.updatedAt,
   });
 });
