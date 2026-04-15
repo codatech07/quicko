@@ -57,6 +57,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ phone: 1 });
+
 // password update OTP
 userSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();

@@ -11,6 +11,7 @@ const {
 } = require("../controllers/shopController");
 const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
+
 // Everyone sees
 router.get("/", getShops);
 router.get("/:id", getShopById);
@@ -20,4 +21,5 @@ router.use("/:shopId/products", productRoute);
 router.post("/", protect, isAdmin,upload.array("images", 5), createShop);
 router.put("/:id", protect, isAdmin,upload.array("images", 5), updateShop);
 router.delete("/:id", protect, isAdmin, deleteShop);
+
 module.exports = router;

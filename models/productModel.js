@@ -12,32 +12,27 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product name required"],
       trim: true,
     },
-
     description: {
       type: String,
       required: true,
       trim: true,
     },
-
     category: {
       type: String,
       required: true,
       enum: PRODUCTCATEGORIES,
       trim: true,
     },
-
     price: {
       type: Number,
       required: true,
       min: [0, "Price must be greater than 0"],
     },
-
     oldPrice: {
       type: Number,
       default: 0,
       min: [0, "old Price must be greater than 0"],
     },
-
     stock: {
       type: Number,
       default: 0,
@@ -49,14 +44,12 @@ const productSchema = new mongoose.Schema(
   enum: PRODUCTCURRENCY,
   trim: true,
 },
-
 unit: {
   type: String,
   required: true,
   enum: PRODUCTUNIT,
   trim: true,
 },
-
     // 🖼️ الصور (لازم صورة على الأقل)
     images: {
       type: [String],
@@ -68,30 +61,25 @@ unit: {
         message: "At least one image is required",
       },
     },
-
     // 🔥 عدد المبيعات
     sold: {
       type: Number,
       default: 0,
     },
-
     // 👁️ عدد المشاهدات
     views: {
       type: Number,
       default: 0,
     },
-
     // ⭐ التقييم
     ratingAvg: {
       type: Number,
       default: 0,
     },
-
     ratingCount: {
       type: Number,
       default: 0,
     },
-
     // 🔗 أهم شي: ربط المنتج بالمحل
     shop: {
       type: mongoose.Schema.Types.ObjectId,
@@ -109,5 +97,6 @@ productSchema.index({ price: 1 });
 productSchema.index({ sold: -1 });
 productSchema.index({ views: -1 });
 productSchema.index({ createdAt: -1 });
+productSchema.index({ shop: 1, category: 1 });
 
 module.exports = mongoose.model("Product", productSchema);

@@ -7,7 +7,6 @@ exports.PRODUCTCATEGORIES = [
   "coat",
   "bantalon",
 ];
-
 exports.SHOPCATEGORIES = [
   "food",
   "electronics",

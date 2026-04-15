@@ -16,22 +16,16 @@ const { protect } = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware");
 const { optionalAuth } = require("../middlewares/optionalauthMiddleware");
 
-
 // 🟢 ALL PRODUCTS
 router.get("/",optionalAuth, getAllProducts);
-
 // 🟢 PRODUCTS BY SHOP
 router.get("/shop/:shopId",optionalAuth, getShopProducts);
-
 // 🟢 SINGLE PRODUCT
 router.get("/:productId",optionalAuth, getProductById);
-
 // 🟢 CREATE PRODUCT (🔥 FIXED)
 router.post("/shop/:shopId", protect, isAdmin, upload.array("images", 5), createProduct);
-
 // 🟡 UPDATE
 router.put("/:productId", protect, isAdmin, upload.array("images", 5), updateProduct);
-
 // 🔴 DELETE
 router.delete("/:productId", protect, isAdmin, deleteProduct);
 

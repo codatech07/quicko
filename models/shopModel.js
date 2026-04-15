@@ -26,23 +26,19 @@ const shopSchema = new mongoose.Schema(
       type: String,
       required: [true, "Contact number required"],
     },
-
     address: {
       type: String,
       required: [true, "Address required"],
       trim: true,
     },
-
     ratingAvg: {
       type: Number,
       default: 0,
     },
-
     ratingCount: {
       type: Number,
       default: 0,
     },
-
     views: {
       type: Number,
       default: 0,
