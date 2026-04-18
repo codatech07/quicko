@@ -5,6 +5,7 @@ const AppError = require("../utils/AppError");
 const { successResponse } = require("../utils/response");
 const attachFavorite = require("../utils/attachFavorite");
 const User = require("../models/userModel");
+const cloudinary = require("../config/cloudinary");
 
 //  create product
 exports.createProduct = asyncHandler(async (req, res) => {
@@ -32,7 +33,11 @@ exports.createProduct = asyncHandler(async (req, res) => {
   category = category.trim();
   // 🖼️ normalize images
   // const imagesArray = Array.isArray(images) ? images : [images];
-  const imagesArray = req.files.map((file) => file.path);
+  // const imagesArray = req.files.map((file) => file.path);
+  const imagesArray = req.files.map((file) => ({
+  url: file.path,
+  public_id: file.filename,
+}));
   // 🏪 check shop exists
   const shopExists = await Shop.findById(shopId);
   if (!shopExists) {
@@ -145,7 +150,17 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   if (currency) product.currency = currency;
 if (unit) product.unit = unit;
   if (req.files && req.files.length > 0) {
-  const imagesArray = req.files.map((file) => file.path);
+ // حذف القديم
+  for (const img of product.images) {
+    await cloudinary.uploader.destroy(img.public_id);
+  }
+
+  // إضافة الجديد
+  const imagesArray = req.files.map((file) => ({
+    url: file.path,
+    public_id: file.filename,
+  }));
+
   product.images = imagesArray;
 }
   await product.save();
@@ -164,6 +179,10 @@ exports.deleteProduct = asyncHandler(async (req, res) => {
     { favorites: productId },
     { $pull: { favorites: productId } }
   );
+  // حذف الصور من cloudinary
+for (const img of product.images) {
+  await cloudinary.uploader.destroy(img.public_id);
+}
   await product.deleteOne();
   return successResponse(res, "Product deleted successfully");
 });

@@ -5,10 +5,11 @@ const cloudinary = require("../config/cloudinary");
 // إعداد التخزين في Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "quicko-app", // اسم فولدر داخل Cloudinary
-    allowed_formats: ["jpg", "png", "jpeg", "webp"],
-  },
+  params: async (req, file) => ({
+  folder: "quicko-app",
+  allowed_formats: ["jpg", "png", "jpeg", "webp"],
+  public_id: `${Date.now()}-${file.originalname}`,
+}),
 });
 
 const upload = multer({ storage });

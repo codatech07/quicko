@@ -51,8 +51,12 @@ unit: {
   trim: true,
 },
     // 🖼️ الصور (لازم صورة على الأقل)
-    images: {
-      type: [String],
+    images: [
+  {
+    url: String,
+    public_id: String,
+  },
+],
       required: true,
       validate: {
         validator: function (arr) {
