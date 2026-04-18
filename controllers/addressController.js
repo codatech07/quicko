@@ -71,7 +71,7 @@ exports.updateAddress = asyncHandler(async (req, res) => {
 exports.getMyAddress = asyncHandler(async (req, res) => {
   const address = await Address.findOne({ user: req.user.id });
   if (!address) {
-    return successResponse(res, "No address found", null);
+    return successResponse(res, "No address found");
   }
   return successResponse(res, "Address fetched", address);
 });
