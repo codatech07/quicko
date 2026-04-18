@@ -3,6 +3,7 @@ const asyncHandler = require("express-async-handler");
 const { successResponse, successDeleteResponse } = require("../utils/response");
 const AppError = require("../utils/AppError");
 const { SHOPCATEGORIES } = require("../utils/validators/constantsShopProduct");
+const cloudinary = require("../config/cloudinary");
 
 const {
   phoneRegex,
@@ -32,8 +33,12 @@ exports.createShop = asyncHandler(async (req, res) => {
     throw new AppError("Invalid category", 400);
   }
   // 3. images normalize
-  const imagesArray = req.files ? req.files.map((file) => file.path) : [];
-  // 4. phone validation
+const imagesArray = req.files
+  ? req.files.map((file) => ({
+      url: file.path,
+      public_id: file.filename,
+    }))
+  : [];  // 4. phone validation
   if (!phoneRegex.test(phone)) {
     throw new AppError("Invalid phone format", 400);
   }
@@ -131,9 +136,19 @@ exports.updateShop = asyncHandler(async (req, res) => {
   }
   // IMAGES (نفس فكرة normalize)
   if (req.files && req.files.length > 0) {
-    const imagesArray = req.files.map((file) => file.path);
-    shop.images = imagesArray;
+  // 🧨 حذف الصور القديمة
+  for (const img of shop.images) {
+    await cloudinary.uploader.destroy(img.public_id);
   }
+
+  // ➕ إضافة الصور الجديدة
+  const imagesArray = req.files.map((file) => ({
+    url: file.path,
+    public_id: file.filename,
+  }));
+
+  shop.images = imagesArray;
+}
   await shop.save();
   return successResponse(res, "Shop updated successfully", shop);
 });
@@ -148,6 +163,11 @@ exports.deleteShop = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {
     throw new AppError("Not authorized, admin only", 403);
   }
-  await shop.deleteOne();
+  const cloudinary = require("../config/cloudinary");
+// حذف الصور من Cloudinary
+for (const img of shop.images) {
+  await cloudinary.uploader.destroy(img.public_id);
+}
+await shop.deleteOne();
   return successDeleteResponse(res);
 });

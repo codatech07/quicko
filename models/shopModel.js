@@ -19,9 +19,20 @@ const shopSchema = new mongoose.Schema(
       trim: true,
     },
     images: {
-      type: [String],
-      default: [],
+  type: [
+    {
+      url: {
+        type: String,
+        required: true,
+      },
+      public_id: {
+        type: String,
+        required: true,
+      },
     },
+  ],
+  default: [],
+},
     phone: {
       type: String,
       required: [true, "Contact number required"],
