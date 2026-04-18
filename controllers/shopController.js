@@ -149,6 +149,7 @@ exports.updateShop = asyncHandler(async (req, res) => {
 
   shop.images = imagesArray;
 }
+console.log("FILES:", req.files.length);
   await shop.save();
   return successResponse(res, "Shop updated successfully", shop);
 });
