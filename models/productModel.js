@@ -51,20 +51,21 @@ unit: {
   trim: true,
 },
     // 🖼️ الصور (لازم صورة على الأقل)
-    images: [
-  {
-    url: String,
-    public_id: String,
-  },
-],
-      required: true,
-      validate: {
-        validator: function (arr) {
-          return arr.length > 0;
-        },
-        message: "At least one image is required",
-      },
+    images: {
+  type: [
+    {
+      url: String,
+      public_id: String,
     },
+  ],
+  required: true,
+  validate: {
+    validator: function (arr) {
+      return arr.length > 0;
+    },
+    message: "At least one image is required",
+  },
+},
     // 🔥 عدد المبيعات
     sold: {
       type: Number,
