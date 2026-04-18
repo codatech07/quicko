@@ -1,8 +1,8 @@
 const rateLimit = require("express-rate-limit");
 
 // قراءة القيم من .env
-const WINDOW_MIN = parseInt(process.env.RATE_LIMIT_WINDOW_MIN) || 15;
-const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX) || 100;
+const WINDOW_MIN = parseInt(process.env.RATE_LIMIT_TIME_MINUTES) || 15;
+const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_REQUESTS) || 100;
 
 // تحويل الدقائق إلى milliseconds
 const windowMs = WINDOW_MIN * 60 * 1000;
