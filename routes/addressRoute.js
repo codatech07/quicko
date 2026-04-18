@@ -8,6 +8,7 @@ const {
   updateAddress,
   getMyAddress,
   deleteAddress,
+  getAddressByUserId,
 } = require("../controllers/addressController");
 const { protect } = require("../middlewares/authMiddleware");
 // ➕ create
