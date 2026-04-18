@@ -1,30 +1,50 @@
 const express = require("express");
 const app = express();
+const { globalLimiter } = require("./middlewares/rateLimitMiddleware");
+const errorHandler = require("./middlewares/errorMiddleware");
+
+// [MIDDLEWARE] Parse JSON body
 app.use(express.json());
-// routes
+
+// [ROUTES] Root route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
+
+// [MIDDLEWARE] global request limit
+app.use(globalLimiter);
+
+// [ROUTES] Authentication routes
 app.use("/api/auth", require("./routes/authRoute"));
-//user
+
+// [ROUTES] User routes
 app.use("/api/users", require("./routes/userRoute"));
-// shops
+
+// [ROUTES] Shop routes
 app.use("/api/shops", require("./routes/shopRoute"));
-// product
+
+// [ROUTES] Product routes
 app.use("/api/products", require("./routes/productRoute"));
-// favorites routes
+
+// [ROUTES] Favorite routes
 app.use("/api/favorites", require("./routes/favoriteRoute"));
-// card 
+
+// [ROUTES] Cart routes
 app.use("/api/cart", require("./routes/cartRoute"));
-// address 
+
+// [ROUTES] Address routes
 app.use("/api/address", require("./routes/addressRoute"));
-// route not found handler
+
+// [ERROR] AppError class
 const AppError = require("./utils/AppError");
 
+// [404 HANDLER] Route not found
 app.all(/.*/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
-// // error middleware
-const errorHandler = require("./middlewares/errorMiddleware");
+
+// [ERROR MIDDLEWARE] Global error handler
 app.use(errorHandler);
+
+// [EXPORT] Export Express app
 module.exports = app;

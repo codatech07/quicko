@@ -1,35 +1,39 @@
 const User = require("../models/userModel");
 
+// FAVORITE ATTACH UTILITY
+// Adds isFavorite flag to products based on user
 module.exports = async function attachFavorite(userId, products) {
-  // إذا ما في منتجات
+  // [EDGE_CASE] No products provided
   if (!products) return products;
 
-  // إذا ما في يوزر (no token)
+  // [GUEST_USER] No logged-in user
   if (!userId) {
+    // [ARRAY_CASE] Multiple products
     if (Array.isArray(products)) {
-      return products.map(p => ({
+      return products.map((p) => ({
         ...p.toObject(),
-        isFavorite: null,
+        isFavorite: null, // unknown for guests
       }));
     }
+    // [SINGLE_CASE] One product
     return {
       ...products.toObject(),
       isFavorite: null,
     };
   }
-  // نجيب favorites تبع المستخدم
+
+  // [DB_FETCH] Get user favorites
   const user = await User.findById(userId).select("favorites");
-  const favoriteIds = new Set(
-    (user?.favorites || []).map(f => f.toString())
-  );
-  // إذا array
+  // [OPTIMIZATION] Convert favorites to Set for fast lookup
+  const favoriteIds = new Set((user?.favorites || []).map((f) => f.toString()));
+  // [ARRAY_CASE] Multiple products
   if (Array.isArray(products)) {
-    return products.map(p => ({
+    return products.map((p) => ({
       ...p.toObject(),
       isFavorite: favoriteIds.has(p._id.toString()),
     }));
   }
-  // إذا عنصر واحد
+  // [SINGLE_CASE] Single product
   return {
     ...products.toObject(),
     isFavorite: favoriteIds.has(products._id.toString()),

@@ -1,6 +1,15 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 
+/*
+TAG: PENDING USER SCHEMA
+الوظيفة:
+تخزين المستخدمين الذين لم يؤكدوا البريد الإلكتروني بعد
+IMPORTANT:
+- نفس userModel تقريباً لكن مؤقت
+- يتم حذف المستخدم بعد التحقق
+*/
+
 const pendingUserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -45,6 +54,9 @@ const pendingUserSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+/*
+TAG: CREATE PASSWORD RESET OTP
+*/
 // password update OTP
 pendingUserSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -54,6 +66,10 @@ pendingUserSchema.methods.createPasswordResetOTP = function () {
   return otp;
 };
 
+
+/*
+TAG: CREATE EMAIL VERIFICATION OTP
+*/
 // email update OTP
 pendingUserSchema.methods.createEmailVerificationOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
