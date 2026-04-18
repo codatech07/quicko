@@ -78,6 +78,16 @@ exports.getMyAddress = asyncHandler(async (req, res) => {
   return successResponse(res, "Address fetched", address);
 });
 
+// get address by user ıd 
+exports.getAddressByUserId = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const address = await Address.findOne({ user: userId });
+  if (!address) {
+    throw new AppError("Address not found", 404);
+  }
+  return successResponse(res, "Address fetched", address);
+});
+
 // DELETE ADDRESS
 exports.deleteAddress = asyncHandler(async (req, res) => {
   const address = await Address.findOne({ user: req.user.id });
