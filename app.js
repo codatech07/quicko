@@ -16,6 +16,8 @@ app.use("/api/products", require("./routes/productRoute"));
 app.use("/api/favorites", require("./routes/favoriteRoute"));
 // card 
 app.use("/api/cart", require("./routes/cartRoute"));
+// address 
+app.use("/api/address", require("./routes/addressRoute"));
 // route not found handler
 const AppError = require("./utils/AppError");
 
