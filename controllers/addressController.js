@@ -1,9 +1,12 @@
 const Address = require("../models/addressModel");
 const asyncHandler = require("express-async-handler");
 const AppError = require("../utils/AppError");
-const { successResponse } = require("../utils/response");
+const { successResponse, successDeleteResponse } = require("../utils/response");
 
-const { phoneRegex, normalizePhone } = require("../utils/validators/authValidators");
+const {
+  phoneRegex,
+  normalizePhone,
+} = require("../utils/validators/authValidators");
 
 // CREATE ADDRESS
 exports.createAddress = asyncHandler(async (req, res) => {
@@ -37,7 +40,6 @@ exports.createAddress = asyncHandler(async (req, res) => {
   });
   return successResponse(res, "Address created", address, 201);
 });
-
 
 // UPDATE ADDRESS
 exports.updateAddress = asyncHandler(async (req, res) => {
@@ -83,5 +85,5 @@ exports.deleteAddress = asyncHandler(async (req, res) => {
     throw new AppError("Address not found", 404);
   }
   await address.deleteOne();
-  return successResponse(res, "Address deleted");
+  return successDeleteResponse(res);
 });
