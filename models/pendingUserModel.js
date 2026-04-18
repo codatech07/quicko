@@ -45,10 +45,6 @@ const pendingUserSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-pendingUserSchema.index({ email: 1 });
-pendingUserSchema.index({ username: 1 });
-pendingUserSchema.index({ phone: 1 });
-
 // password update OTP
 pendingUserSchema.methods.createPasswordResetOTP = function () {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
