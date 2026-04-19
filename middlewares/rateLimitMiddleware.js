@@ -15,7 +15,6 @@ const globalLimiter = rateLimit({
   },
 });
 
-
 // AUTH limiter
 const authTime = parseInt(process.env.AUTH_RATE_LIMIT_TIME_MINUTES) || 10;
 const authMax = parseInt(process.env.AUTH_RATE_LIMIT_REQUESTS) || 10;

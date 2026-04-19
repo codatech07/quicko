@@ -12,6 +12,7 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 // [SERVER_BOOT] Start server only after DB connection
 const startServer = async () => {
   try {
+    console.log("🔥 Server restarted");
     // [DB_CONNECT] Connect to MongoDB
     await connectDB();
     // [PORT] Define server port

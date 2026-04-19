@@ -17,8 +17,6 @@ app.use("/api/auth", require("./routes/authRoute"));
 // [MIDDLEWARE] global request limit
 app.use(globalLimiter);
 
-
-
 // [ROUTES] User routes
 app.use("/api/users", require("./routes/userRoute"));
 
