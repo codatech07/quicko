@@ -10,10 +10,11 @@ const {
   checkAvailability,
 } = require("../controllers/authController");
 const { protect } = require("../middlewares/authMiddleware.js");
+const { authLimiter } = require("../middlewares/rateLimitMiddleware");
 const router = express.Router();
-router.post("/register", register);
-router.post("/login", login);
-router.post("/forgot-password", forgotPassword);
+router.post("/register",authLimiter, register);
+router.post("/login",authLimiter, login);
+router.post("/forgot-password",authLimiter, forgotPassword);
 router.post("/verify-otp", verifyOTP);
 router.post("/reset-password", resetPassword);
 router.post("/verify-email", verifyEmail);
