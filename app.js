@@ -11,11 +11,13 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
+// [ROUTES] Authentication routes
+app.use("/api/auth", require("./routes/authRoute"));
+
 // [MIDDLEWARE] global request limit
 app.use(globalLimiter);
 
-// [ROUTES] Authentication routes
-app.use("/api/auth", require("./routes/authRoute"));
+
 
 // [ROUTES] User routes
 app.use("/api/users", require("./routes/userRoute"));
