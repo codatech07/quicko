@@ -11,8 +11,6 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-
-
 // [MIDDLEWARE] global request limit
 app.use(globalLimiter);
 
